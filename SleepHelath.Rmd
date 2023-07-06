@@ -1,5 +1,5 @@
 ---
-title: "Assignment 6: Who busts the Mythbusters?"
+title: "Final Project"
 author: "Dahye Chung"
 date: "`r Sys.Date()`"
 documentclass: article
