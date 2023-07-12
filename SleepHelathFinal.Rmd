@@ -1,6 +1,6 @@
 ---
 title: "Final Project"
-author: "Dahye Chung"
+author: "Group 1:Boyeon Kim, Donguk Yoom, JungYoon Choi, Semin Seo, Hanseung Jang, Sanghyun Lee, Helena Burke, Seokyeong Park, Dahye Chung"
 date: "`r Sys.Date()`"
 documentclass: article
 geometry: margin=1in
@@ -52,7 +52,7 @@ suppressPackageStartupMessages(library(boot))
 
 ```{r}
 library(tidyr)
-ibrary(ggplot2)
+library(ggplot2)
 library(ggmosaic)
 library(dplyr)
 Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
