@@ -120,3 +120,37 @@ alpha = 0.5
   )
 ```
 
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>% group_by(...) %>%
+summarize(
+mean = mean(duration),
+median = median(duration), 
+standard_deviation = sd(duration), 
+minimum = min(duration),
+maximum = max(duration)
+)
+```
+
+
+```{r}
+shl_null <- ... %>%
+specify(),
+hypothesize(),
+generate(reps = 10000, type = permute),
+calculate()
+)
+```
+
+
+```{r}
+shl_obs_stat <- Sleep_health_and_lifestyle_dataset_renamed %>% 
+specify(formula = ... ~ ...) %>%
+calculate(stat = "", order = c("",""))
+```
+
+
+```{r}
+shl %>%
+get_p_value(obs_stat = shl_obs_stat, direction = "both")
+```
