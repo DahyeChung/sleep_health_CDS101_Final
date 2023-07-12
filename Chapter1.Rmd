@@ -52,7 +52,7 @@ suppressPackageStartupMessages(library(boot))
 
 ```{r}
 library(tidyr)
-ibrary(ggplot2)
+library(ggplot2)
 library(ggmosaic)
 library(dplyr)
 Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
@@ -70,4 +70,14 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
           DSteps = 'Daily Steps' ,
           Disorder = 'Sleep Disorder' )
 ```
+
+# BMI 컬럼 변수명 통합 및 변경
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
+```
+
+
 
