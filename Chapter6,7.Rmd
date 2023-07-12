@@ -52,7 +52,7 @@ suppressPackageStartupMessages(library(boot))
 
 ```{r}
 library(tidyr)
-ibrary(ggplot2)
+library(ggplot2)
 library(ggmosaic)
 library(dplyr)
 Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
@@ -69,5 +69,54 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
           HRate = 'Heart Rate' ,
           DSteps = 'Daily Steps' ,
           Disorder = 'Sleep Disorder' )
+```
+
+
+
+```{r}
+names(Sleep_health_and_lifestyle_dataset_renamed)
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
+```
+
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "Fat") %>%
+  ggplot() +
+  geom_histogram( 
+    mapping = aes(x = Duration, fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
+```
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "Fat") %>%
+  ggplot() +
+  geom_histogram( 
+    mapping = aes(x = Duration, y= ..density.., fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
+```
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "Fat") %>%
+  ggplot() +
+  geom_density( 
+    mapping = aes(x = Duration, fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
 ```
 
