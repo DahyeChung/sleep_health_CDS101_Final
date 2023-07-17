@@ -56,11 +56,16 @@ library(ggplot2)
 library(ggmosaic)
 library(dplyr)
 library(readr)
+library(class)
 ```
 
-#Variables rename, cast type
-```{r}
 
+```{r}
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+
+# 데이터 가져오기
 Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyle_dataset.csv",
   col_types = cols(
     'Sleep Duration' = col_character(),
@@ -74,6 +79,7 @@ Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyl
     'Sleep Disorder' = col_character()
   ))
 
+# 데이터 클리닝
 Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
   rename(ID = 'Person ID',
          Duration = 'Sleep Duration',
@@ -87,20 +93,97 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
          Disorder = 'Sleep Disorder')
 ```
 
-#Display structure of the data
 ```{r}
-str(Sleep_health_and_lifestyle_dataset_renamed)
-```
-
-#Data preparation
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed$ID <- NULL
-Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset_renamed[complete.cases(Sleep_health_and_lifestyle_dataset_renamed),]
-```
-
-
-#Sufficient Sleep T/F
-```{r}
-sleep_dataset <- Sleep_health_and_lifestyle_dataset_renamed %>%
+# Sufficient Sleep T/F
+sleep_data <- Sleep_health_and_lifestyle_dataset_renamed %>%
     mutate(sufficient_sleep = as.logical(Duration >= 7.0))
+
+# 변수별 sufficient sleep 확인 - Disorder
+sleep_data %>%
+  pivot_longer(cols = c(Disorder), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "identity",
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+
+# 변수별 sufficient sleep 확인 - Gender
+sleep_data %>%
+  pivot_longer(cols = c(Gender), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "identity",
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+
+# 변수별 sufficient sleep 확인 - BMI
+sleep_data %>%
+  pivot_longer(cols = c(BMI), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "identity",
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+
+# 변수별 sufficient sleep 확인 - Physical, Stress, BMI, BPressure, HRate, DSteps
+sleep_data %>%
+  pivot_longer(cols = c(Physical, Stress, BMI, BPressure, HRate, DSteps), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "identity",
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+# 데이터 분할 (Training & Testing)
+set.seed(123)  # For reproducibility
+train_indices <- sample(1:nrow(sleep_data), 0.7 * nrow(sleep_data))  # 70% for training
+trainingSet <- sleep_data[train_indices, 1:12]
+testSet <- sleep_data[-train_indices, 1:12]
+training_Outcomes <- sleep_data[train_indices, "sufficient_sleep"]
+test_Outcomes <- sleep_data[-train_indices, "sufficient_sleep"]
+
+# 로지스틱 회귀 모델 학습
+model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, data = trainingSet, family = binomial)
+
+# 예측 수행
+predictions <- predict(model, newdata = testSet, type = "response")
+
+# 결과 분석
+threshold <- 0.5  # 임계값 설정
+predicted_classes <- ifelse(predictions >= threshold, "Sufficient", "Insufficient")
+actual_classes <- test_Outcomes
+accuracy <- sum(predicted_classes == actual_classes) / length(actual_classes)
+print(paste("Accuracy:", accuracy))
+
+# 모델 1 예측
+model_1_preds <- testSet %>%
+  add_predictions(model, type = "response") %>%
+  mutate(
+    outcome = if_else(pred > 0.5, "Sufficient", "Insufficient")
+  )
+
 ```
+
