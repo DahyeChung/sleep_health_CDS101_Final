@@ -1,6 +1,6 @@
 ---
 title: "Final Project"
-author: "Group 1:Boyeon Kim, Donguk Yoom, JungYoon Choi, Semin Seo, Hanseung Jang, Sanghyun Lee, Helena Burke, Seokyeong Park, Dahye Chung"
+author: "Semin Seo"
 date: "`r Sys.Date()`"
 documentclass: article
 geometry: margin=1in
@@ -49,7 +49,7 @@ suppressPackageStartupMessages(library(modelr))
 suppressPackageStartupMessages(library(boot))
 ```
 
-
+# Load the dataset
 ```{r}
 library(tidyr)
 library(ggplot2)
@@ -57,7 +57,7 @@ library(ggmosaic)
 library(dplyr)
 Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
 ```
-#데이터 변수명 변경
+#Convert Data Name
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
   rename( Duration = 'Sleep Duration',
@@ -70,4 +70,102 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
           DSteps = 'Daily Steps' ,
           Disorder = 'Sleep Disorder' )
 ```
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
+```
+
+# Explore dataset
+```{r}
+str(Sleep_health_and_lifestyle_dataset)
+```
+```{r}
+head(Sleep_health_and_lifestyle_dataset)
+```
+```{r}
+tail(Sleep_health_and_lifestyle_dataset)
+```
+# Check summary
+
+
+```{r}
+summary(Sleep_health_and_lifestyle_dataset_renamed)
+```
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  summarize(
+    standard_deviation = sd(HRate)
+    
+  )
+```
+# Visualizing data
+## Histogram
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_histogram(mapping = aes(x = HRate)) +
+    labs(title = "Count of Heart Rate", x = "Heart rate")
+```
+
+## Box plot
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_boxplot(mapping = aes(x = HRate)) +
+    labs(title = "Boxplot of Individual Heart Rate", x = "Heart rate")
+```
+## Violin plot
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_violin(mapping = aes(x = HRate, y ="")) +
+    labs(title = "Violin of Individual Heart rate", x = "Heart rate", y = "y")
+```
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+  geom_bin2d(mapping = aes(x = HRate, y = Duration)) +
+  labs(title = "HRate and Duration ",x = "Heart Rate",y = "Duration") + scale_fill_viridis_c(trans = "log")
+```
+
+## Bar Graph
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_bar(mapping = aes(x = BMI)) +
+    labs(title = "BMI Count", x = "BMI")
+```
+
+## Box plot
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_boxplot(mapping = aes(x = BMI, y = Duration)) +
+    labs(title = "Relationship between BMI and Duration", x = "BMI")
+```
+## Violin plot
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_violin(mapping = aes(x = BMI, y = Duration)) +
+    labs(title = "Relationship between BMI and Duration", x = "bmi", y = "Duration")
+```
+
+#Scatter plot_Duration and Heart Rate
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed    %>% 
+ggplot()    +
+geom_point(mapping = aes(x = BMI, y = Duration))    + 
+labs(
+title = "Scatter plot of Duration and Heart Rate", 
+x = "BMI",
+y = "Duration" 
+)
+```
+
+
+
 
