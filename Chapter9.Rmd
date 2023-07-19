@@ -1,6 +1,6 @@
 ---
 title: "Final Project"
-author: "Group 1:Boyeon Kim, Donguk Yoom, JungYoon Choi, Semin Seo, Hanseung Jang, Sanghyun Lee, Helena Burke, Seokyeong Park, Dahye Chung"
+author: "Dahye Chung, Donguk Yoo, Hanseung Jang, Sanghyun Lee, Jungyoon Choi, Seokyeong Park, Semin Seo, Boyeon Kim"
 date: "`r Sys.Date()`"
 documentclass: article
 geometry: margin=1in
@@ -25,6 +25,21 @@ output:
     
 ---
 
+
+
+
+
+
+```{r}
+library(tidyverse)
+library(broom)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+
+
+```
+
 ```{r setup, include = FALSE}
 # DO NOT ALTER THIS CHUNK
 knitr::opts_chunk$set(
@@ -47,35 +62,42 @@ suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(ggmosaic))
 suppressPackageStartupMessages(library(modelr))
 suppressPackageStartupMessages(library(boot))
+suppressPackageStartupMessages(library(caret))
+
 ```
 
-
+# Load the dataset
 ```{r}
 library(tidyr)
 library(ggplot2)
 library(ggmosaic)
 library(dplyr)
-library(readr)
-library(class)
+Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
 ```
 
 
+###Part 9
 ```{r}
 library(tidyr)
 library(ggplot2)
 library(dplyr)
+library(readr)
+library(class)
+library(caret)
 
 # 데이터 가져오기
 Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyle_dataset.csv",
   col_types = cols(
-    'Sleep Duration' = col_character(),
-    'Stress Level' = col_character(),
-    'Physical Activity Level' = col_character(),
-    'Quality of Sleep' = col_character(),
+    'Person ID' = col_character(),
+    'Age' = col_double(),
+    'Sleep Duration' = col_double(),
+    'Stress Level' = col_double(),
+    'Physical Activity Level' = col_double(),
+    'Quality of Sleep' = col_double(),
     'BMI Category' = col_character(),
     'Blood Pressure' = col_character(),
-    'Heart Rate' = col_character(),
-    'Daily Steps' = col_character(),
+    'Heart Rate' = col_double(),
+    'Daily Steps' = col_double(),
     'Sleep Disorder' = col_character()
   ))
 
@@ -91,13 +113,13 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
          HRate = 'Heart Rate',
          DSteps = 'Daily Steps',
          Disorder = 'Sleep Disorder')
+
+# Sufficient Sleep T/F
+sleep_data <- Sleep_health_and_lifestyle_dataset_renamed %>%
+    mutate(sufficient_sleep = Duration >= 7.0)
 ```
 
 ```{r}
-# Sufficient Sleep T/F
-sleep_data <- Sleep_health_and_lifestyle_dataset_renamed %>%
-    mutate(sufficient_sleep = as.logical(Duration >= 7.0))
-
 sleep_data %>%
   pivot_longer(cols = c(Disorder), names_to = "variable", values_to = "value") %>%
   group_by(variable, value, sufficient_sleep) %>%
@@ -105,14 +127,16 @@ sleep_data %>%
   ggplot() +
   geom_bar(
     mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "identity",
+    position = "dodge",   
     alpha = 0.6,
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
   labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
 
+```
 
+```{r}
 sleep_data %>%
   pivot_longer(cols = c(Gender), names_to = "variable", values_to = "value") %>%
   group_by(variable, value, sufficient_sleep) %>%
@@ -120,14 +144,16 @@ sleep_data %>%
   ggplot() +
   geom_bar(
     mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "identity",
+    position = "dodge",  
     alpha = 0.6,
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
   labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
 
+```
 
+```{r}
 sleep_data %>%
   pivot_longer(cols = c(BMI), names_to = "variable", values_to = "value") %>%
   mutate(value = ifelse(value == "Normal", "Normal Weight", value)) %>%
@@ -136,7 +162,7 @@ sleep_data %>%
   ggplot() +
   geom_bar(
     mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "identity",
+    position = "dodge",   
     alpha = 0.6,
     stat = "identity"
   ) +
@@ -144,7 +170,9 @@ sleep_data %>%
   labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
 
 
+```
 
+```{r}
 sleep_data %>%
   pivot_longer(cols = c(Physical), names_to = "variable", values_to = "value") %>%
   group_by(variable, value, sufficient_sleep) %>%
@@ -152,61 +180,76 @@ sleep_data %>%
   ggplot() +
   geom_bar(
     mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "identity",
+    position = "dodge",   # dodge로 변경
     alpha = 0.6,
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
   labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
-
-
-
-sleep_data %>%
-  pivot_longer(cols = c( Stress, BPressure, HRate, DSteps), names_to = "variable", values_to = "value") %>%
-  group_by(variable, value, sufficient_sleep) %>%
-  summarise(count = n()) %>%
-  ggplot() +
-  geom_bar(
-    mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "identity",
-    alpha = 0.6,
-    stat = "identity"
-  ) +
-  facet_wrap(~ variable, scales = "free") +
-  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
-
-
-# Data Split (Training & Testing)
-set.seed(123)
-train_indices <- sample(1:nrow(sleep_data), 0.7 * nrow(sleep_data)) 
-trainingSet <- sleep_data[train_indices, 1:12]
-testSet <- sleep_data[-train_indices, 1: 12]
-training_Outcomes <- sleep_data[train_indices, "sufficient_sleep"]
-test_Outcomes <- sleep_data[-train_indices, "sufficient_sleep"]
-
-
-#model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, 
-#             data = trainingSet, family = "binomial")
-
-#cv_model <- train(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, 
-#                  data = trainingSet, method = "glm", trControl = trainControl(method = "cv", number = 5))
-
-
-#predictions <- predict(model, newdata = testSet, type = "response")
-
-#threshold <- 0.5  
-#predicted_classes <- ifelse(predictions >= threshold, "Sufficient", "Insufficient")
-#actual_classes <- test_Outcomes
-#accuracy <- sum(predicted_classes == actual_classes) / length(actual_classes)
-#print(paste("Accuracy:", accuracy))
-
-# Model 1 Prediction
-#model_1_preds <- testSet %>%
-#  add_predictions(model, type = "response") %>%
-#  mutate(
-#    outcome = if_else(pred > 0.5, "Sufficient", "Insufficient")
-#  )
 
 ```
+
+
+
+```{r}
+# Create 'sufficient_sleep' variable in original data
+sleep_data$sufficient_sleep <- ifelse(sleep_data$Duration >= 7, "Sufficient", "Insufficient")
+
+# Split data into training and test sets
+set.seed(123)
+train_indices <- createDataPartition(sleep_data$sufficient_sleep, p = 0.7, list = FALSE)
+trainingSet <- sleep_data[train_indices, ]
+testSet <- sleep_data[-train_indices, ]
+
+# Convert 'sufficient_sleep', 'Gender', 'Occupation', and 'BMI' variables to factor in training and test sets
+trainingSet$sufficient_sleep <- as.factor(trainingSet$sufficient_sleep)
+trainingSet$Gender <- as.factor(trainingSet$Gender)
+trainingSet$Occupation <- as.factor(trainingSet$Occupation)
+trainingSet$BMI <- as.factor(trainingSet$BMI)
+
+testSet$sufficient_sleep <- as.factor(testSet$sufficient_sleep)
+testSet$Gender <- as.factor(testSet$Gender)
+testSet$Occupation <- as.factor(testSet$Occupation)
+testSet$BMI <- as.factor(testSet$BMI)
+
+# Recode 'BMI' in both sets
+trainingSet$BMI <- recode(trainingSet$BMI, "Normal Weight" = "Normal")
+testSet$BMI <- recode(testSet$BMI, "Normal Weight" = "Normal")
+```
+
+```{r}
+# Train the model
+model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, 
+             data = trainingSet, family = "binomial")
+
+cv_model <- train(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, 
+                 data = trainingSet, method = "glm", trControl = trainControl(method = "cv", number = 5))
+```
+
+```{r}
+
+# 모델 예측 및 평가
+predictions <- predict(model, newdata = testSet, type = "response")
+threshold <- 0.5  
+predicted_classes <- ifelse(predictions >= threshold, "Sufficient", "Insufficient")
+actual_classes <- test_Outcomes
+accuracy <- sum(predicted_classes == actual_classes) / length(actual_classes)
+print(paste("Accuracy:", accuracy))
+```
+
+```{r}
+#Model 1 Prediction
+model_1_preds <- testSet %>%
+  add_predictions(model, type = "response") %>%
+  mutate(
+    outcome = if_else(pred > 0.5, "Sufficient", "Insufficient")
+  )
+
+```
+
+
+
+
+
 
 
