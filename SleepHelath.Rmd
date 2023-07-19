@@ -1,0 +1,521 @@
+---
+title: "Final Project"
+author: "Dahye Chung, Donguk Yoo, Hanseung Jang, Sanghyun Lee, Jungyoon Choi, Seokyeong Park, Semin Seo, Boyeon Kim"
+date: "`r Sys.Date()`"
+documentclass: article
+geometry: margin=1in
+fontsize: 11pt
+output:
+  pdf_document:
+    toc: false
+    df_print: kable
+    fig_caption: false
+    number_sections: false
+    dev: pdf
+    highlight: tango
+  html_document:
+    theme: default
+    self_contained: true
+    toc: false
+    df_print: kable
+    fig_caption: false
+    number_sections: false
+    smart: true
+    dev: svg
+    
+---
+
+
+
+
+
+
+```{r}
+library(tidyverse)
+library(broom)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+
+
+```
+
+```{r setup, include = FALSE}
+# DO NOT ALTER THIS CHUNK
+knitr::opts_chunk$set(
+  echo = TRUE,
+  eval = TRUE,
+  fig.width = 5,
+  fig.asp = 0.618,
+  out.width = "70%",
+  dpi = 120,
+  fig.align = "center",
+  cache = FALSE
+)
+# Cost function for cross validation
+cost <- function(obs, pred) {
+  outcome <- pred > 0.5
+  return(1 - (sum(obs == outcome) / length(obs)))
+}
+# Load required packages
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(ggmosaic))
+suppressPackageStartupMessages(library(modelr))
+suppressPackageStartupMessages(library(boot))
+```
+
+# Load the dataset
+```{r}
+library(tidyr)
+library(ggplot2)
+library(ggmosaic)
+library(dplyr)
+Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
+```
+
+### Part1 
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
+  rename( Duration = 'Sleep Duration',
+          Stress = 'Stress Level',
+          Physical = 'Physical Activity Level' ,
+          Quality = 'Quality of Sleep' ,
+          BMI= 'BMI Category' ,
+          BPressure = 'Blood Pressure' ,
+          HRate = 'Heart Rate' ,
+          DSteps = 'Daily Steps' ,
+          Disorder = 'Sleep Disorder' )
+```
+
+
+### Part 2
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset%>%
+  rename( ID = "Person ID",
+          Duration = 'Sleep Duration',
+          Stress = 'Stress Level',
+          Physical = 'Physical Activity Level' ,
+          Quality = 'Quality of Sleep' ,
+          BMI= 'BMI Category' ,
+          BPressure = 'Blood Pressure' ,
+          HRate = 'Heart Rate' ,
+          DSteps = 'Daily Steps' ,
+          Disorder = 'Sleep Disorder' )
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot()+
+  geom_point( mapping = aes( x = Age , y = Duration, color = Gender))+
+  labs(
+   title = "scatter plot differed by gender",
+   x= "Age", y = " Duration")
+```
+
+
+```{r}
+model_2 <- lm(Duration ~ Physical,Sleep_health_and_lifestyle_dataset_renamed)
+```
+
+```{r}
+model_2$coefficients
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+  geom_point(mapping = aes(x = Physical, y = Duration), bin = 10) +
+  geom_abline(slope = model_2$coefficients[2], 
+              intercept = model_2$coefficients[1])+
+   labs(x = "Physical Activity Level", y = "Sleep Duration",
+                    title = "scatter plot of physical activity level and sleep duration" )
+```
+
+
+### Part 3
+
+```{r}
+
+library(tidyr)
+library(ggplot2)
+library(ggmosaic)
+library(dplyr)
+Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
+```
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
+  rename( ID = 'Person ID',
+          Duration = 'Sleep Duration',
+          Stress = 'Stress Level',
+          Physical = 'Physical Activity Level' ,
+          Quality = 'Quality of Sleep' ,
+          BMI= 'BMI Category' ,
+          BPressure = 'Blood Pressure' ,
+          HRate = 'Heart Rate' ,
+          DSteps = 'Daily Steps' ,
+          Disorder = 'Sleep Disorder')
+```
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  select(ID, HRate, Duration, Gender, Age, Occupation, Physical, BMI, Quality) %>%
+  arrange(Duration)
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+ select(ID, HRate, Duration, Gender, Age, Occupation, Physical, BMI, Quality) %>%
+  arrange(Duration) %>%
+  filter(Gender == 'Female')
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+ select(ID, HRate, Duration, Gender, Age, Occupation, Physical, BMI, Quality) %>%
+  arrange(Duration) %>%
+  filter(Gender == 'Male')
+```
+
+
+### Part4 
+
+
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
+  rename( Duration = 'Sleep Duration',
+          Stress = 'Stress Level',
+          Physical = 'Physical Activity Level' ,
+          Quality = 'Quality of Sleep' ,
+          BMI= 'BMI Category' ,
+          BPressure = 'Blood Pressure' ,
+          HRate = 'Heart Rate' ,
+          DSteps = 'Daily Steps' ,
+          Disorder = 'Sleep Disorder' )
+```
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
+```
+
+# Explore dataset
+```{r}
+str(Sleep_health_and_lifestyle_dataset)
+```
+```{r}
+head(Sleep_health_and_lifestyle_dataset)
+```
+```{r}
+tail(Sleep_health_and_lifestyle_dataset)
+```
+
+# Check summary
+
+
+
+```{r}
+summary(Sleep_health_and_lifestyle_dataset_renamed)
+```
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  summarize(
+    standard_deviation = sd(HRate)
+    
+  )
+```
+
+# Visualizing data
+## Histogram
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_histogram(mapping = aes(x = HRate)) +
+    labs(title = "Count of Heart Rate", x = "Heart rate")
+```
+
+
+## Box plot
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_boxplot(mapping = aes(x = HRate)) +
+    labs(title = "Boxplot of Individual Heart Rate", x = "Heart rate")
+```
+
+## Violin plot
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_violin(mapping = aes(x = HRate, y ="")) +
+    labs(title = "Violin of Individual Heart rate", x = "Heart rate", y = "y")
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+  geom_bin2d(mapping = aes(x = HRate, y = Duration)) +
+  labs(title = "HRate and Duration ",x = "Heart Rate",y = "Duration") + scale_fill_viridis_c(trans = "log")
+```
+
+## Bar Graph
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_bar(mapping = aes(x = BMI)) +
+    labs(title = "BMI Count", x = "BMI")
+```
+
+## Box plot
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_boxplot(mapping = aes(x = BMI, y = Duration)) +
+    labs(title = "Relationship between BMI and Duration", x = "BMI")
+```
+## Violin plot
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_violin(mapping = aes(x = BMI, y = Duration)) +
+    labs(title = "Relationship between BMI and Duration", x = "bmi", y = "Duration")
+```
+
+#Scatter plot_Duration and Heart Rate
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed    %>% 
+ggplot()    +
+geom_point(mapping = aes(x = BMI, y = Duration))    + 
+labs(
+title = "Scatter plot of Duration and Heart Rate", 
+x = "BMI",
+y = "Duration" 
+)
+```
+
+
+### PART 5 _ Modeling 
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed%>%
+  ggplot()+
+  geom_point( mapping = aes( x  = Physical , y = Duration)) +
+  labs(title = "Relationships between Physical activies and Duration",
+       x = "Physical Activities" , y = "Duration")
+```
+
+
+
+
+
+
+```{r}
+
+data <- Sleep_health_and_lifestyle_dataset_renamed
+
+model <- lm(Duration ~ Physical, data = Sleep_health_and_lifestyle_dataset_renamed)
+
+
+summary(model)
+
+```
+
+```{r}
+
+residuals <- residuals(model)
+
+qqnorm(residuals)
+qqline(residuals)
+labs( title  = "QQplot" , x = "Theoretical" , y = "Quantaties")
+
+
+
+```
+
+```{r}
+Renamed_other_model <- lm(Duration ~ Physical, data = Sleep_health_and_lifestyle_dataset_renamed)
+
+```
+
+```{r}
+Renamed_other_model$coefficients
+```
+
+```{r}
+Renamed_other_model%>%
+  tidy()
+```
+
+```{r}
+Renamed_other_model%>%
+  glance()%>%
+  select(r.squared)
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed%>%
+  ggplot()+
+  geom_point(mapping = aes( x  = Physical , y = Duration) )+
+  geom_abline(slope = Renamed_other_model$coefficients[2]	,
+              intercept = Renamed_other_model$coefficients[1]  )+
+  labs( title = "Relationships between Physical and Duration",
+        x = " Physical ",
+        y = " Duration" )
+
+```
+
+###Part 9
+```{r}
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+
+# 데이터 가져오기
+Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyle_dataset.csv",
+  col_types = cols(
+    'Sleep Duration' = col_character(),
+    'Stress Level' = col_character(),
+    'Physical Activity Level' = col_character(),
+    'Quality of Sleep' = col_character(),
+    'BMI Category' = col_character(),
+    'Blood Pressure' = col_character(),
+    'Heart Rate' = col_character(),
+    'Daily Steps' = col_character(),
+    'Sleep Disorder' = col_character()
+  ))
+
+# 데이터 클리닝
+Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
+  rename(ID = 'Person ID',
+         Duration = 'Sleep Duration',
+         Stress = 'Stress Level',
+         Physical = 'Physical Activity Level',
+         Quality = 'Quality of Sleep',
+         BMI = 'BMI Category',
+         BPressure = 'Blood Pressure',
+         HRate = 'Heart Rate',
+         DSteps = 'Daily Steps',
+         Disorder = 'Sleep Disorder')
+```
+
+```{r}
+# Sufficient Sleep T/F
+sleep_data <- Sleep_health_and_lifestyle_dataset_renamed %>%
+    mutate(sufficient_sleep = as.logical(Duration >= 7.0))
+```
+
+```{r}
+sleep_data %>%
+  pivot_longer(cols = c(Disorder), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "identity",
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+```
+
+```{r}
+sleep_data %>%
+  pivot_longer(cols = c(Gender), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "identity",
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+```
+
+```{r}
+
+sleep_data %>%
+  pivot_longer(cols = c(BMI), names_to = "variable", values_to = "value") %>%
+  mutate(value = ifelse(value == "Normal", "Normal Weight", value)) %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "identity",
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+
+```
+
+```{r}
+
+sleep_data %>%
+  pivot_longer(cols = c(Physical), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "identity",
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+```
+
+
+```{r}
+sleep_data %>%
+  pivot_longer(cols = c( Stress, BPressure, HRate, DSteps), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "identity",
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+```
+
+```{r}
+# Data Split (Training & Testing)
+set.seed(123)
+train_indices <- sample(1:nrow(sleep_data), 0.7 * nrow(sleep_data)) 
+trainingSet <- sleep_data[train_indices, 1:12]
+testSet <- sleep_data[-train_indices, 1: 12]
+training_Outcomes <- sleep_data[train_indices, "sufficient_sleep"]
+test_Outcomes <- sleep_data[-train_indices, "sufficient_sleep"]
+```
+
+
+
+
+
+
+
