@@ -493,40 +493,36 @@ sleep_data %>%
 
 ```
 
-
-
 ```{r}
-# Data Split (Training & Testing)
+# Create 'sufficient_sleep' variable in original data
+sleep_data$sufficient_sleep <- ifelse(sleep_data$Duration >= 7, "Sufficient", "Insufficient")
+
+# Split data into training and test sets
 set.seed(123)
 train_indices <- createDataPartition(sleep_data$sufficient_sleep, p = 0.7, list = FALSE)
+trainingSet <- sleep_data[train_indices, ]
+testSet <- sleep_data[-train_indices, ]
 
-trainingSet <- sleep_data[train_indices, 1:12]
-testSet <- sleep_data[-train_indices, 1:12]
-
-trainingSet$sufficient_sleep <- factor(sleep_data$sufficient_sleep[train_indices], levels = c("Insufficient", "Sufficient"))
-testSet$sufficient_sleep <- factor(sleep_data$sufficient_sleep[-train_indices], levels = c("Insufficient", "Sufficient"))
-
-trainingSet$BMI <- recode(trainingSet$BMI, "Normal Weight" = "Normal")
-testSet$BMI <- recode(testSet$BMI, "Normal Weight" = "Normal")
-
+# Convert 'sufficient_sleep', 'Gender', 'Occupation', and 'BMI' variables to factor in training and test sets
+trainingSet$sufficient_sleep <- as.factor(trainingSet$sufficient_sleep)
 trainingSet$Gender <- as.factor(trainingSet$Gender)
 trainingSet$Occupation <- as.factor(trainingSet$Occupation)
 trainingSet$BMI <- as.factor(trainingSet$BMI)
 
+testSet$sufficient_sleep <- as.factor(testSet$sufficient_sleep)
 testSet$Gender <- as.factor(testSet$Gender)
 testSet$Occupation <- as.factor(testSet$Occupation)
 testSet$BMI <- as.factor(testSet$BMI)
 
+# Recode 'BMI' in both sets
+trainingSet$BMI <- recode(trainingSet$BMI, "Normal Weight" = "Normal")
+testSet$BMI <- recode(testSet$BMI, "Normal Weight" = "Normal")
+
 training_Outcomes <- trainingSet$sufficient_sleep
 test_Outcomes <- testSet$sufficient_sleep
+```
 
-
-# 모델 훈련
-model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, 
-             data = trainingSet, family = "binomial")
-
-cv_model <- train(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, 
-                 data = trainingSet, method = "glm", trControl = trainControl(method = "cv", number = 5))
+```{r}
 
 # 모델 예측 및 평가
 predictions <- predict(model, newdata = testSet, type = "response")
@@ -535,7 +531,9 @@ predicted_classes <- ifelse(predictions >= threshold, "Sufficient", "Insufficien
 actual_classes <- test_Outcomes
 accuracy <- sum(predicted_classes == actual_classes) / length(actual_classes)
 print(paste("Accuracy:", accuracy))
+```
 
+```{r}
 #Model 1 Prediction
 model_1_preds <- testSet %>%
   add_predictions(model, type = "response") %>%
@@ -544,10 +542,3 @@ model_1_preds <- testSet %>%
   )
 
 ```
-
-
-
-
-
-
-

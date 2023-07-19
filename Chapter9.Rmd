@@ -63,7 +63,6 @@ suppressPackageStartupMessages(library(ggmosaic))
 suppressPackageStartupMessages(library(modelr))
 suppressPackageStartupMessages(library(boot))
 suppressPackageStartupMessages(library(caret))
-
 ```
 
 # Load the dataset
@@ -192,6 +191,23 @@ sleep_data %>%
 
 
 ```{r}
+# Calculate the mode of 'Gender', 'Occupation', and 'BMI' columns
+mode_gender <- as.character(names(which.max(table(sleep_data$Gender))))
+mode_occupation <- as.character(names(which.max(table(sleep_data$Occupation))))
+mode_bmi <- as.character(names(which.max(table(sleep_data$BMI))))
+
+# Handle NA values in 'Gender', 'Occupation', and 'BMI'
+sleep_data <- sleep_data %>%
+mutate(
+  Gender = if_else(is.na(Gender), mode_gender, Gender),
+  Occupation = if_else(is.na(Occupation), mode_occupation, Occupation),
+  BMI = if_else(is.na(BMI), mode_bmi, BMI)
+)
+
+```
+
+
+```{r}
 # Create 'sufficient_sleep' variable in original data
 sleep_data$sufficient_sleep <- ifelse(sleep_data$Duration >= 7, "Sufficient", "Insufficient")
 
@@ -200,22 +216,41 @@ set.seed(123)
 train_indices <- createDataPartition(sleep_data$sufficient_sleep, p = 0.7, list = FALSE)
 trainingSet <- sleep_data[train_indices, ]
 testSet <- sleep_data[-train_indices, ]
+```
 
+```{r}
 # Convert 'sufficient_sleep', 'Gender', 'Occupation', and 'BMI' variables to factor in training and test sets
 trainingSet$sufficient_sleep <- as.factor(trainingSet$sufficient_sleep)
-trainingSet$Gender <- as.factor(trainingSet$Gender)
-trainingSet$Occupation <- as.factor(trainingSet$Occupation)
-trainingSet$BMI <- as.factor(trainingSet$BMI)
-
 testSet$sufficient_sleep <- as.factor(testSet$sufficient_sleep)
-testSet$Gender <- as.factor(testSet$Gender)
-testSet$Occupation <- as.factor(testSet$Occupation)
-testSet$BMI <- as.factor(testSet$BMI)
 
-# Recode 'BMI' in both sets
-trainingSet$BMI <- recode(trainingSet$BMI, "Normal Weight" = "Normal")
-testSet$BMI <- recode(testSet$BMI, "Normal Weight" = "Normal")
+training_Outcomes <- trainingSet$sufficient_sleep
+test_Outcomes <- testSet$sufficient_sleep
 ```
+
+```{r}
+# 로지스틱 회귀 모델 학습
+model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, data = trainingSet, family = binomial)
+
+# 예측 수행
+predictions <- predict(model, newdata = testSet, type = "response")
+
+# 결과 분석
+threshold <- 0.5  # 임계값 설정
+predicted_classes <- ifelse(predictions >= threshold, "Sufficient", "Insufficient")
+actual_classes <- test_Outcomes
+accuracy <- sum(predicted_classes == actual_classes) / length(actual_classes)
+print(paste("Accuracy:", accuracy))
+
+# 모델 1 예측
+model_1_preds <- testSet %>%
+  add_predictions(model, type = "response") %>%
+  mutate(
+    outcome = if_else(condition = pred > 0.5, 
+                      "Sufficient", "Insufficient")
+  )
+
+```
+
 
 ```{r}
 # Train the model
