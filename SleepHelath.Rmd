@@ -380,6 +380,7 @@ Sleep_health_and_lifestyle_dataset_renamed%>%
 
 ```
 
+
 ###Part 9
 ```{r}
 library(tidyr)
@@ -389,7 +390,6 @@ library(readr)
 library(class)
 library(caret)
 
-# 데이터 가져오기
 Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyle_dataset.csv",
   col_types = cols(
     'Person ID' = col_character(),
@@ -405,7 +405,6 @@ Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyl
     'Sleep Disorder' = col_character()
   ))
 
-# 데이터 클리닝
 Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
   rename(ID = 'Person ID',
          Duration = 'Sleep Duration',
@@ -418,7 +417,7 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
          DSteps = 'Daily Steps',
          Disorder = 'Sleep Disorder')
 
-# Sufficient Sleep T/F
+
 sleep_data <- Sleep_health_and_lifestyle_dataset_renamed %>%
     mutate(sufficient_sleep = Duration >= 7.0)
 ```
@@ -436,8 +435,10 @@ sleep_data %>%
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
-  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
-
+  labs(title = "Distribution of Sufficient Sleep across Disorders",
+       x = "Disorder Type", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
 ```
 
 ```{r}
@@ -453,7 +454,10 @@ sleep_data %>%
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
-  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+  labs(title = "Distribution of Sufficient Sleep by Gender",
+       x = "Value", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
 
 ```
 
@@ -471,74 +475,87 @@ sleep_data %>%
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
-  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
-
+  labs(title = "Distribution of Sufficient Sleep by BMI Category",
+       x = "Value", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
 
 ```
 
 ```{r}
 sleep_data %>%
-  pivot_longer(cols = c(Physical), names_to = "variable", values_to = "value") %>%
+  pivot_longer(cols = c(BMI), names_to = "variable", values_to = "value") %>%
+  mutate(value = ifelse(value == "Normal", "Normal Weight", value)) %>%
   group_by(variable, value, sufficient_sleep) %>%
   summarise(count = n()) %>%
   ggplot() +
   geom_bar(
     mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "dodge",   # dodge로 변경
+    position = "dodge",   
     alpha = 0.6,
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
-  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+  labs(title = "Distribution of Sufficient Sleep by BMI Category",
+       x = "Value", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
 
 ```
 
-```{r}
-# Create 'sufficient_sleep' variable in original data
+
+
+```{r,warning = FALSE}
+mode_gender <- as.character(names(which.max(table(sleep_data$Gender))))
+mode_occupation <- as.character(names(which.max(table(sleep_data$Occupation))))
+mode_bmi <- as.character(names(which.max(table(sleep_data$BMI))))
+
+sleep_data <- sleep_data %>%
+mutate(
+  Gender = if_else(is.na(Gender), mode_gender, Gender),
+  Occupation = if_else(is.na(Occupation), mode_occupation, Occupation),
+  BMI = if_else(is.na(BMI), mode_bmi, BMI)
+)
+
+```
+
+
+```{r,warning = FALSE}
 sleep_data$sufficient_sleep <- ifelse(sleep_data$Duration >= 7, "Sufficient", "Insufficient")
 
-# Split data into training and test sets
 set.seed(123)
 train_indices <- createDataPartition(sleep_data$sufficient_sleep, p = 0.7, list = FALSE)
 trainingSet <- sleep_data[train_indices, ]
 testSet <- sleep_data[-train_indices, ]
+```
 
-# Convert 'sufficient_sleep', 'Gender', 'Occupation', and 'BMI' variables to factor in training and test sets
+```{r,warning = FALSE}
 trainingSet$sufficient_sleep <- as.factor(trainingSet$sufficient_sleep)
-trainingSet$Gender <- as.factor(trainingSet$Gender)
-trainingSet$Occupation <- as.factor(trainingSet$Occupation)
-trainingSet$BMI <- as.factor(trainingSet$BMI)
-
 testSet$sufficient_sleep <- as.factor(testSet$sufficient_sleep)
-testSet$Gender <- as.factor(testSet$Gender)
-testSet$Occupation <- as.factor(testSet$Occupation)
-testSet$BMI <- as.factor(testSet$BMI)
-
-# Recode 'BMI' in both sets
-trainingSet$BMI <- recode(trainingSet$BMI, "Normal Weight" = "Normal")
-testSet$BMI <- recode(testSet$BMI, "Normal Weight" = "Normal")
 
 training_Outcomes <- trainingSet$sufficient_sleep
 test_Outcomes <- testSet$sufficient_sleep
 ```
 
-```{r}
+```{r,warning = FALSE}
+model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, data = trainingSet, family = binomial)
 
-# 모델 예측 및 평가
 predictions <- predict(model, newdata = testSet, type = "response")
+
 threshold <- 0.5  
-predicted_classes <- ifelse(predictions >= threshold, "Sufficient", "Insufficient")
+predicted_classes <- as.factor(ifelse(predictions >= threshold, "Sufficient", "Insufficient"))
 actual_classes <- test_Outcomes
 accuracy <- sum(predicted_classes == actual_classes) / length(actual_classes)
 print(paste("Accuracy:", accuracy))
-```
 
-```{r}
-#Model 1 Prediction
 model_1_preds <- testSet %>%
   add_predictions(model, type = "response") %>%
   mutate(
-    outcome = if_else(pred > 0.5, "Sufficient", "Insufficient")
+    outcome = as.factor(if_else(condition = pred > threshold, 
+                      "Sufficient", "Insufficient"))
   )
 
 ```
+
+
+

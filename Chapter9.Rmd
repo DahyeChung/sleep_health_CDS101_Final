@@ -13,6 +13,7 @@ output:
     number_sections: false
     dev: pdf
     highlight: tango
+    extra_dependencies: ["kotex"]
   html_document:
     theme: default
     self_contained: true
@@ -25,7 +26,7 @@ output:
     
 ---
 
-```{r}
+```{r,warning = FALSE}
 library(tidyverse)
 library(broom)
 library(tidyverse)
@@ -42,28 +43,22 @@ knitr::opts_chunk$set(
   out.width = "70%",
   dpi = 120,
   fig.align = "center",
-  cache = FALSE
+  cache = FALSE,
+  max.print = 100
 )
 cost <- function(obs, pred) {
   outcome <- pred > 0.5
   return(1 - (sum(obs == outcome) / length(obs)))
 }
 suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(broom))
+suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(ggmosaic))
 suppressPackageStartupMessages(library(modelr))
 suppressPackageStartupMessages(library(boot))
 suppressPackageStartupMessages(library(caret))
 ```
-
-# Load the dataset
-```{r}
-library(tidyr)
-library(ggplot2)
-library(ggmosaic)
-library(dplyr)
-Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
-```
-
 
 ###Part 9
 ```{r}
@@ -119,8 +114,10 @@ sleep_data %>%
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
-  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
-
+  labs(title = "Distribution of Sufficient Sleep across Disorders",
+       x = "Disorder Type", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
 ```
 
 ```{r}
@@ -136,7 +133,10 @@ sleep_data %>%
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
-  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+  labs(title = "Distribution of Sufficient Sleep by Gender",
+       x = "Value", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
 
 ```
 
@@ -154,31 +154,37 @@ sleep_data %>%
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
-  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
-
+  labs(title = "Distribution of Sufficient Sleep by BMI Category",
+       x = "Value", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
 
 ```
 
 ```{r}
 sleep_data %>%
-  pivot_longer(cols = c(Physical), names_to = "variable", values_to = "value") %>%
+  pivot_longer(cols = c(BMI), names_to = "variable", values_to = "value") %>%
+  mutate(value = ifelse(value == "Normal", "Normal Weight", value)) %>%
   group_by(variable, value, sufficient_sleep) %>%
   summarise(count = n()) %>%
   ggplot() +
   geom_bar(
     mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "dodge", 
+    position = "dodge",   
     alpha = 0.6,
     stat = "identity"
   ) +
   facet_wrap(~ variable, scales = "free") +
-  labs(x = "Value", y = "Count", fill = "Sufficient Sleep")
+  labs(title = "Distribution of Sufficient Sleep by BMI Category",
+       x = "Value", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
 
 ```
 
 
 
-```{r}
+```{r,warning = FALSE}
 mode_gender <- as.character(names(which.max(table(sleep_data$Gender))))
 mode_occupation <- as.character(names(which.max(table(sleep_data$Occupation))))
 mode_bmi <- as.character(names(which.max(table(sleep_data$BMI))))
@@ -193,7 +199,7 @@ mutate(
 ```
 
 
-```{r}
+```{r,warning = FALSE}
 sleep_data$sufficient_sleep <- ifelse(sleep_data$Duration >= 7, "Sufficient", "Insufficient")
 
 set.seed(123)
@@ -202,7 +208,7 @@ trainingSet <- sleep_data[train_indices, ]
 testSet <- sleep_data[-train_indices, ]
 ```
 
-```{r}
+```{r,warning = FALSE}
 trainingSet$sufficient_sleep <- as.factor(trainingSet$sufficient_sleep)
 testSet$sufficient_sleep <- as.factor(testSet$sufficient_sleep)
 
@@ -210,7 +216,7 @@ training_Outcomes <- trainingSet$sufficient_sleep
 test_Outcomes <- testSet$sufficient_sleep
 ```
 
-```{r}
+```{r,warning = FALSE}
 model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, data = trainingSet, family = binomial)
 
 predictions <- predict(model, newdata = testSet, type = "response")
@@ -229,7 +235,6 @@ model_1_preds <- testSet %>%
   )
 
 ```
-
 
 
 
