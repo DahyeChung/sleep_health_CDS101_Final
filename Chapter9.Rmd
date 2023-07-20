@@ -1,6 +1,8 @@
 ---
 title: "Final Project"
-author: "Dahye Chung, Donguk Yoo, Hanseung Jang, Sanghyun Lee, Jungyoon Choi, Seokyeong Park, Semin Seo, Boyeon Kim"
+author: 
+ - Dahye Chung, Donguk Yoo, Hanseung Jang, Sanghyun Lee, Jungyoon Choi, 
+ - Seokyeong Park, Semin Seo, Boyeon Kim
 date: "`r Sys.Date()`"
 documentclass: article
 geometry: margin=1in
@@ -14,6 +16,8 @@ output:
     dev: pdf
     highlight: tango
     extra_dependencies: ["kotex"]
+    keep_tex: true
+     
   html_document:
     theme: default
     self_contained: true
@@ -23,51 +27,31 @@ output:
     number_sections: false
     smart: true
     dev: svg
-    
+ditor_options:
+  chunk_output_type: console
 ---
 
-```{r,warning = FALSE}
+# Include library
+
+```{r, warning = FALSE, message= FALSE}
 library(tidyverse)
 library(broom)
-library(tidyverse)
 library(tidyr)
 library(dplyr)
-```
-
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  echo = TRUE,
-  eval = TRUE,
-  fig.width = 5,
-  fig.asp = 0.618,
-  out.width = "70%",
-  dpi = 120,
-  fig.align = "center",
-  cache = FALSE,
-  max.print = 100
-)
-cost <- function(obs, pred) {
-  outcome <- pred > 0.5
-  return(1 - (sum(obs == outcome) / length(obs)))
-}
-suppressPackageStartupMessages(library(tidyverse))
-suppressPackageStartupMessages(library(broom))
-suppressPackageStartupMessages(library(tidyr))
-suppressPackageStartupMessages(library(dplyr))
-suppressPackageStartupMessages(library(ggmosaic))
-suppressPackageStartupMessages(library(modelr))
-suppressPackageStartupMessages(library(boot))
-suppressPackageStartupMessages(library(caret))
-```
-
-###Part 9
-```{r}
+library(modelr)
+library(boot)
 library(tidyr)
 library(ggplot2)
+library(ggmosaic)
 library(dplyr)
 library(readr)
 library(class)
 library(caret)
+```
+
+# Load the dataset
+
+```{r, warning = FALSE, message= FALSE}
 
 Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyle_dataset.csv",
   col_types = cols(
@@ -84,6 +68,12 @@ Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyl
     'Sleep Disorder' = col_character()
   ))
 
+```
+
+# Rename
+
+```{r, warning = FALSE, message= FALSE}
+
 Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
   rename(ID = 'Person ID',
          Duration = 'Sleep Duration',
@@ -95,13 +85,18 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
          HRate = 'Heart Rate',
          DSteps = 'Daily Steps',
          Disorder = 'Sleep Disorder')
-
-
-sleep_data <- Sleep_health_and_lifestyle_dataset_renamed %>%
-    mutate(sufficient_sleep = Duration >= 7.0)
 ```
 
-```{r}
+# Parse Sleep Data
+```{r, warning = FALSE, message= FALSE}
+
+sleep_data <- Sleep_health_and_lifestyle_dataset_renamed %>%
+    mutate(sufficient_sleep = as.logical(Duration >= 7.0))
+```
+
+# Sleep Data Disorders
+
+```{r, warning = FALSE, message= FALSE}
 sleep_data %>%
   pivot_longer(cols = c(Disorder), names_to = "variable", values_to = "value") %>%
   group_by(variable, value, sufficient_sleep) %>%
@@ -120,7 +115,9 @@ sleep_data %>%
        fill = "Sufficient Sleep")
 ```
 
-```{r}
+# Sleep Data Gender
+
+```{r, warning = FALSE, message= FALSE}
 sleep_data %>%
   pivot_longer(cols = c(Gender), names_to = "variable", values_to = "value") %>%
   group_by(variable, value, sufficient_sleep) %>%
@@ -140,7 +137,9 @@ sleep_data %>%
 
 ```
 
-```{r}
+# Sleep Data BMI
+
+```{r, warning = FALSE, message= FALSE}
 sleep_data %>%
   pivot_longer(cols = c(BMI), names_to = "variable", values_to = "value") %>%
   mutate(value = ifelse(value == "Normal", "Normal Weight", value)) %>%
@@ -161,30 +160,9 @@ sleep_data %>%
 
 ```
 
-```{r}
-sleep_data %>%
-  pivot_longer(cols = c(BMI), names_to = "variable", values_to = "value") %>%
-  mutate(value = ifelse(value == "Normal", "Normal Weight", value)) %>%
-  group_by(variable, value, sufficient_sleep) %>%
-  summarise(count = n()) %>%
-  ggplot() +
-  geom_bar(
-    mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "dodge",   
-    alpha = 0.6,
-    stat = "identity"
-  ) +
-  facet_wrap(~ variable, scales = "free") +
-  labs(title = "Distribution of Sufficient Sleep by BMI Category",
-       x = "Value", 
-       y = "Count", 
-       fill = "Sufficient Sleep")
+# Mode
 
-```
-
-
-
-```{r,warning = FALSE}
+```{r, warning = FALSE, message= FALSE}
 mode_gender <- as.character(names(which.max(table(sleep_data$Gender))))
 mode_occupation <- as.character(names(which.max(table(sleep_data$Occupation))))
 mode_bmi <- as.character(names(which.max(table(sleep_data$BMI))))
@@ -198,17 +176,21 @@ mutate(
 
 ```
 
+# Sufficient Sleep
 
-```{r,warning = FALSE}
+```{r, warning = FALSE, message= FALSE}
 sleep_data$sufficient_sleep <- ifelse(sleep_data$Duration >= 7, "Sufficient", "Insufficient")
 
+```
+
+# Saparate Train, Test Set
+
+```{r, warning = FALSE, message= FALSE}
 set.seed(123)
 train_indices <- createDataPartition(sleep_data$sufficient_sleep, p = 0.7, list = FALSE)
 trainingSet <- sleep_data[train_indices, ]
 testSet <- sleep_data[-train_indices, ]
-```
 
-```{r,warning = FALSE}
 trainingSet$sufficient_sleep <- as.factor(trainingSet$sufficient_sleep)
 testSet$sufficient_sleep <- as.factor(testSet$sufficient_sleep)
 
@@ -216,10 +198,25 @@ training_Outcomes <- trainingSet$sufficient_sleep
 test_Outcomes <- testSet$sufficient_sleep
 ```
 
-```{r,warning = FALSE}
+# Train
+
+```{r, warning = FALSE, message= FALSE}
 model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, data = trainingSet, family = binomial)
 
+
+```
+
+# Predict
+
+```{r, warning = FALSE, message= FALSE}
 predictions <- predict(model, newdata = testSet, type = "response")
+
+
+```
+
+# Test
+
+```{r, warning = FALSE, }
 
 threshold <- 0.5  
 predicted_classes <- as.factor(ifelse(predictions >= threshold, "Sufficient", "Insufficient"))
@@ -235,9 +232,3 @@ model_1_preds <- testSet %>%
   )
 
 ```
-
-
-
-
-
-
