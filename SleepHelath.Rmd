@@ -177,19 +177,6 @@ p_value <- Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right"
 
 
 ```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "High") %>%
-  ggplot() +
-  geom_density(mapping = aes(x = Duration, fill = BMI), position = "identity", alpha = 0.5) +
-  geom_text(aes(x = Inf, y = Inf, label = paste("p-value =", round(p_value, 3))),
-            hjust = 1, vjust = 1, color = "red") +
-  labs(title = "Duration vs. BMI Density Plot",
-       x = "Duration",
-       y = "Density") +
-  theme_minimal()
-```
-
-```{r}
 Simulation_results %>%
  visualize() +
  shade_p_value(obs_stat = Shl_obs_stat, direction = "right")
