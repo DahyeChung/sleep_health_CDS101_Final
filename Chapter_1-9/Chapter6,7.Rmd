@@ -1,6 +1,6 @@
 ---
 title: "Final Project"
-author: "Group 1:Boyeon Kim, Donguk Yoom, JungYoon Choi, Semin Seo, Hanseung Jang, Sanghyun Lee, Helena Burke, Seokyeong Park, Dahye Chung"
+author: "Group 1"
 date: "`r Sys.Date()`"
 documentclass: article
 geometry: margin=1in
@@ -55,9 +55,11 @@ library(tidyr)
 library(ggplot2)
 library(ggmosaic)
 library(dplyr)
+library(infer)
 Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
 ```
-#데이터 변수명 변경
+
+
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
   rename( Duration = 'Sleep Duration',
@@ -78,8 +80,8 @@ names(Sleep_health_and_lifestyle_dataset_renamed)
 ```
 
 ```{r}
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "High"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "High"
 Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
 ```
 
@@ -87,7 +89,7 @@ Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_datase
 
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "Fat") %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
   ggplot() +
   geom_histogram( 
     mapping = aes(x = Duration, fill = BMI), 
@@ -99,7 +101,7 @@ alpha = 0.5
 
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "Fat") %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
   ggplot() +
   geom_histogram( 
     mapping = aes(x = Duration, y= ..density.., fill = BMI), 
@@ -111,7 +113,7 @@ alpha = 0.5
 
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "Fat") %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
   ggplot() +
   geom_density( 
     mapping = aes(x = Duration, fill = BMI), 
@@ -122,35 +124,71 @@ alpha = 0.5
 
 
 ```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>% group_by(...) %>%
+Sleep_health_and_lifestyle_dataset_renamed %>%
 summarize(
-mean = mean(duration),
-median = median(duration), 
-standard_deviation = sd(duration), 
-minimum = min(duration),
-maximum = max(duration)
+mean = mean(Duration),
+median = median(Duration), 
+standard_deviation = sd(Duration), 
+minimum = min(Duration),
+maximum = max(Duration)
 )
 ```
 
 
+
+
 ```{r}
-shl_null <- ... %>%
-specify(),
-hypothesize(),
-generate(reps = 10000, type = permute),
-calculate()
-)
+Model <- lm(Duration ~ BMI, data = Sleep_health_and_lifestyle_dataset_renamed)
+Simulation_results <-
+  Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(Duration ~ BMI) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("Normal", "High"))
 ```
 
 
 ```{r}
-shl_obs_stat <- Sleep_health_and_lifestyle_dataset_renamed %>% 
-specify(formula = ... ~ ...) %>%
-calculate(stat = "", order = c("",""))
+Shl_obs_stat <-
+  Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(formula = Duration ~ BMI) %>%
+  calculate(stat = "diff in means", order = c("Normal","High"))
+```
+
+```{r}
+Shl_null <- Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(Duration ~ BMI) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute")
 ```
 
 
 ```{r}
-shl %>%
-get_p_value(obs_stat = shl_obs_stat, direction = "both")
+Shl_null %>%
+  get_p_value(obs_stat = Shl_obs_stat, direction = "right")
 ```
+
+
+
+```{r}
+Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
+p_value <- Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
+  ggplot() +
+  geom_density(mapping = aes(x = Duration, fill = BMI), position = "identity", alpha = 0.5) +
+  geom_text(aes(x = Inf, y = Inf, label = paste("p-value =", round(p_value, 3))),
+            hjust = 1, vjust = 1, color = "red") +
+  labs(title = "Duration vs. BMI Density Plot",
+       x = "Duration",
+       y = "Density") +
+  theme_minimal()
+```
+
+
+
+
+

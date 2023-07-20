@@ -45,6 +45,7 @@ library(dplyr)
 library(readr)
 library(class)
 library(caret)
+library(infer)
 ```
 
 ```{r setup, include = FALSE}
@@ -71,7 +72,7 @@ suppressPackageStartupMessages(library(modelr))
 suppressPackageStartupMessages(library(boot))
 ```
 
-# Load the dataset
+#Intro
 ```{r, message=FALSE}
 library(tidyr)
 library(ggplot2)
@@ -80,7 +81,200 @@ library(dplyr)
 Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_dataset.csv")
 ```
 
-### Part1 
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
+  rename( Duration = 'Sleep Duration',
+          Stress = 'Stress Level',
+          Physical = 'Physical Activity Level' ,
+          Quality = 'Quality of Sleep' ,
+          BMI= 'BMI Category' ,
+          BPressure = 'Blood Pressure' ,
+          HRate = 'Heart Rate' ,
+          DSteps = 'Daily Steps' ,
+          Disorder = 'Sleep Disorder' )
+```
+
+#Predictive Analysis
+
+###Load the dataset
+
+```{r, warning = FALSE, message= FALSE}
+
+Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyle_dataset.csv",
+  col_types = cols(
+    'Person ID' = col_character(),
+    'Age' = col_double(),
+    'Sleep Duration' = col_double(),
+    'Stress Level' = col_double(),
+    'Physical Activity Level' = col_double(),
+    'Quality of Sleep' = col_double(),
+    'BMI Category' = col_character(),
+    'Blood Pressure' = col_character(),
+    'Heart Rate' = col_double(),
+    'Daily Steps' = col_double(),
+    'Sleep Disorder' = col_character()
+  ))
+
+```
+
+# Rename
+
+```{r, warning = FALSE, message= FALSE}
+
+Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
+  rename(ID = 'Person ID',
+         Duration = 'Sleep Duration',
+         Stress = 'Stress Level',
+         Physical = 'Physical Activity Level',
+         Quality = 'Quality of Sleep',
+         BMI = 'BMI Category',
+         BPressure = 'Blood Pressure',
+         HRate = 'Heart Rate',
+         DSteps = 'Daily Steps',
+         Disorder = 'Sleep Disorder')
+```
+
+# Parse Sleep Data
+```{r, warning = FALSE, message= FALSE}
+
+sleep_data <- Sleep_health_and_lifestyle_dataset_renamed %>%
+    mutate(sufficient_sleep = as.logical(Duration >= 7.0))
+```
+
+# Sleep Data Disorders
+```{r, warning = FALSE, message= FALSE}
+sleep_data %>%
+  pivot_longer(cols = c(Disorder), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "dodge",   
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(title = "Distribution of Sufficient Sleep across Disorders",
+       x = "Disorder Type", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
+```
+
+# Sleep Data Gender
+
+```{r, warning = FALSE, message= FALSE}
+sleep_data %>%
+  pivot_longer(cols = c(Gender), names_to = "variable", values_to = "value") %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "dodge",  
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(title = "Distribution of Sufficient Sleep by Gender",
+       x = "Value", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
+
+```
+
+# Sleep Data BMI
+
+```{r, warning = FALSE, message= FALSE}
+sleep_data %>%
+  pivot_longer(cols = c(BMI), names_to = "variable", values_to = "value") %>%
+  mutate(value = ifelse(value == "Normal", "Normal Weight", value)) %>%
+  group_by(variable, value, sufficient_sleep) %>%
+  summarise(count = n()) %>%
+  ggplot() +
+  geom_bar(
+    mapping = aes(x = value, y = count, fill = sufficient_sleep),
+    position = "dodge",   
+    alpha = 0.6,
+    stat = "identity"
+  ) +
+  facet_wrap(~ variable, scales = "free") +
+  labs(title = "Distribution of Sufficient Sleep by BMI Category",
+       x = "Value", 
+       y = "Count", 
+       fill = "Sufficient Sleep")
+
+```
+
+# Mode
+
+```{r, warning = FALSE, message= FALSE}
+mode_gender <- as.character(names(which.max(table(sleep_data$Gender))))
+mode_occupation <- as.character(names(which.max(table(sleep_data$Occupation))))
+mode_bmi <- as.character(names(which.max(table(sleep_data$BMI))))
+
+sleep_data <- sleep_data %>%
+mutate(
+  Gender = if_else(is.na(Gender), mode_gender, Gender),
+  Occupation = if_else(is.na(Occupation), mode_occupation, Occupation),
+  BMI = if_else(is.na(BMI), mode_bmi, BMI)
+)
+
+```
+
+# Sufficient Sleep
+
+```{r, warning = FALSE, message= FALSE}
+sleep_data$sufficient_sleep <- ifelse(sleep_data$Duration >= 7, "Sufficient", "Insufficient")
+
+```
+
+# Saparate Train, Test Set
+
+```{r, warning = FALSE, message= FALSE}
+set.seed(123)
+train_indices <- createDataPartition(sleep_data$sufficient_sleep, p = 0.7, list = FALSE)
+trainingSet <- sleep_data[train_indices, ]
+testSet <- sleep_data[-train_indices, ]
+
+trainingSet$sufficient_sleep <- as.factor(trainingSet$sufficient_sleep)
+testSet$sufficient_sleep <- as.factor(testSet$sufficient_sleep)
+
+training_Outcomes <- trainingSet$sufficient_sleep
+test_Outcomes <- testSet$sufficient_sleep
+```
+
+# Train
+```{r, warning = FALSE, message= FALSE}
+model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, data = trainingSet, family = binomial)
+```
+
+# Predict
+```{r, warning = FALSE, message= FALSE}
+predictions <- predict(model, newdata = testSet, type = "response")
+```
+
+# Test
+```{r, warning = FALSE, }
+
+threshold <- 0.5  
+predicted_classes <- as.factor(ifelse(predictions >= threshold, "Sufficient", "Insufficient"))
+actual_classes <- test_Outcomes
+accuracy <- sum(predicted_classes == actual_classes) / length(actual_classes)
+print(paste("Accuracy:", accuracy))
+
+model_1_preds <- testSet %>%
+  add_predictions(model, type = "response") %>%
+  mutate(
+    outcome = as.factor(if_else(condition = pred > threshold, 
+                      "Sufficient", "Insufficient"))
+  )
+
+```
+
+
+#Hypothesis
+
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
   rename( Duration = 'Sleep Duration',
@@ -95,7 +289,116 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
 ```
 
 
-### Part 2 
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "High"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "High"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
+```
+
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
+  ggplot() +
+  geom_histogram( 
+    mapping = aes(x = Duration, fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
+```
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
+  ggplot() +
+  geom_histogram( 
+    mapping = aes(x = Duration, y= ..density.., fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
+```
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
+  ggplot() +
+  geom_density( 
+    mapping = aes(x = Duration, fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
+```
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+summarize(
+mean = mean(Duration),
+median = median(Duration), 
+standard_deviation = sd(Duration), 
+minimum = min(Duration),
+maximum = max(Duration)
+)
+```
+
+
+
+
+```{r}
+Model <- lm(Duration ~ BMI, data = Sleep_health_and_lifestyle_dataset_renamed)
+Simulation_results <-
+  Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(Duration ~ BMI) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("Normal", "High"))
+```
+
+
+```{r}
+Shl_obs_stat <-
+  Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(formula = Duration ~ BMI) %>%
+  calculate(stat = "diff in means", order = c("Normal","High"))
+```
+
+```{r}
+Shl_null <- Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(Duration ~ BMI) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute")
+```
+
+
+```{r}
+Shl_null %>%
+  get_p_value(obs_stat = Shl_obs_stat, direction = "right")
+```
+
+
+
+```{r}
+Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
+p_value <- Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
+  ggplot() +
+  geom_density(mapping = aes(x = Duration, fill = BMI), position = "identity", alpha = 0.5) +
+  geom_text(aes(x = Inf, y = Inf, label = paste("p-value =", round(p_value, 3))),
+            hjust = 1, vjust = 1, color = "red") +
+  labs(title = "Duration vs. BMI Density Plot",
+       x = "Duration",
+       y = "Density") +
+  theme_minimal()
+```
+
+### Part 2 Data Visualization
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset%>%
   rename( ID = "Person ID",
@@ -135,7 +438,7 @@ Sleep_health_and_lifestyle_dataset_renamed %>%
    labs(x = "Physical Activity Level", y = "Sleep Duration",
                     title = "physical activity level vs sleep duration" )
 ```
-### Part 3 
+### Data Wrangling
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
 Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
@@ -165,7 +468,7 @@ head(Sleep_health_and_lifestyle_dataset_renamed) %>%
   filter(Gender == 'Male')
 ```
 
-### Part4 
+### EDA
 
 # Explore dataset
 
@@ -175,11 +478,7 @@ head(Sleep_health_and_lifestyle_dataset)
 ```{r}
 tail(Sleep_health_and_lifestyle_dataset)
 ```
-# Check summary
 
-```{r}
-summary(Sleep_health_and_lifestyle_dataset_renamed)
-```
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed %>%
   summarize(
@@ -316,183 +615,78 @@ Sleep_health_and_lifestyle_dataset_renamed%>%
 
 ```
 
-# Load the dataset
+#Advanced Modeling
 
-```{r, warning = FALSE, message= FALSE}
 
-Sleep_health_and_lifestyle_dataset <- read_csv(file = "Sleep_health_and_lifestyle_dataset.csv",
-  col_types = cols(
-    'Person ID' = col_character(),
-    'Age' = col_double(),
-    'Sleep Duration' = col_double(),
-    'Stress Level' = col_double(),
-    'Physical Activity Level' = col_double(),
-    'Quality of Sleep' = col_double(),
-    'BMI Category' = col_character(),
-    'Blood Pressure' = col_character(),
-    'Heart Rate' = col_double(),
-    'Daily Steps' = col_double(),
-    'Sleep Disorder' = col_character()
-  ))
-
+```{r}
+continuous_model <- lm(Duration ~ Gender + Age + Occupation + DSteps + BMI + Physical, data = Sleep_health_and_lifestyle_dataset_renamed)
+coefficients <- tidy (continuous_model)
+coefficients
 ```
 
-# Rename
-
-```{r, warning = FALSE, message= FALSE}
-
-Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
-  rename(ID = 'Person ID',
-         Duration = 'Sleep Duration',
-         Stress = 'Stress Level',
-         Physical = 'Physical Activity Level',
-         Quality = 'Quality of Sleep',
-         BMI = 'BMI Category',
-         BPressure = 'Blood Pressure',
-         HRate = 'Heart Rate',
-         DSteps = 'Daily Steps',
-         Disorder = 'Sleep Disorder')
+```{r}
+r_squared <- glance(continuous_model)$r.squared
 ```
 
-# Parse Sleep Data
-```{r, warning = FALSE, message= FALSE}
-
-sleep_data <- Sleep_health_and_lifestyle_dataset_renamed %>%
-    mutate(sufficient_sleep = as.logical(Duration >= 7.0))
+```{r}
+Sleep_health_and_lifestyle_dataset_df <- Sleep_health_and_lifestyle_dataset_renamed %>%
+  add_predictions(continuous_model) %>%
+  add_residuals(continuous_model)
 ```
 
-# Sleep Data Disorders
-
-```{r, warning = FALSE, message= FALSE}
-sleep_data %>%
-  pivot_longer(cols = c(Disorder), names_to = "variable", values_to = "value") %>%
-  group_by(variable, value, sufficient_sleep) %>%
-  summarise(count = n()) %>%
+#Histogram of residual in Sleep_health_and_lifestyle_dataset_df
+```{r}
+Sleep_health_and_lifestyle_dataset_df %>%
   ggplot() +
-  geom_bar(
-    mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "dodge",   
-    alpha = 0.6,
-    stat = "identity"
-  ) +
-  facet_wrap(~ variable, scales = "free") +
-  labs(title = "Distribution of Sufficient Sleep across Disorders",
-       x = "Disorder Type", 
-       y = "Count", 
-       fill = "Sufficient Sleep")
+  geom_histogram(mapping = aes(x = resid), color = "blue", fill = "pink", bins = 10) +
+  labs(x = "residual", y ="Duration",
+title = "Histogram of residual in Sleep_health_and_lifestyle_dataset_df")
 ```
 
-# Sleep Data Gender
-
-```{r, warning = FALSE, message= FALSE}
-sleep_data %>%
-  pivot_longer(cols = c(Gender), names_to = "variable", values_to = "value") %>%
-  group_by(variable, value, sufficient_sleep) %>%
-  summarise(count = n()) %>%
+#Observed vs. Predicted Plot
+```{r}
+Sleep_health_and_lifestyle_dataset_df %>%
   ggplot() +
-  geom_bar(
-    mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "dodge",  
-    alpha = 0.6,
-    stat = "identity"
-  ) +
-  facet_wrap(~ variable, scales = "free") +
-  labs(title = "Distribution of Sufficient Sleep by Gender",
-       x = "Value", 
-       y = "Count", 
-       fill = "Sufficient Sleep")
-
+  geom_point(mapping = aes(x = pred, y = Duration)) +
+  geom_abline(slope = 1, intercept = 0) +
+  labs(title = "Observed vs. Predicted Plot", x = "Predicted Duration", y = "Observed Duration")
 ```
 
-# Sleep Data BMI
-
-```{r, warning = FALSE, message= FALSE}
-sleep_data %>%
-  pivot_longer(cols = c(BMI), names_to = "variable", values_to = "value") %>%
-  mutate(value = ifelse(value == "Normal", "Normal Weight", value)) %>%
-  group_by(variable, value, sufficient_sleep) %>%
-  summarise(count = n()) %>%
+#Residual vs Predicted Plot
+```{r}
+Sleep_health_and_lifestyle_dataset_df %>%
   ggplot() +
-  geom_bar(
-    mapping = aes(x = value, y = count, fill = sufficient_sleep),
-    position = "dodge",   
-    alpha = 0.6,
-    stat = "identity"
-  ) +
-  facet_wrap(~ variable, scales = "free") +
-  labs(title = "Distribution of Sufficient Sleep by BMI Category",
-       x = "Value", 
-       y = "Count", 
-       fill = "Sufficient Sleep")
-
+  geom_point(mapping = aes(x = pred, y = resid)) +
+  geom_hline(yintercept = 0) +
+  labs( title= "Residual vs Predicted Plot",
+        x = "Predicted Duration",
+        y = "Residuals")
 ```
 
-# Mode
-
-```{r, warning = FALSE, message= FALSE}
-mode_gender <- as.character(names(which.max(table(sleep_data$Gender))))
-mode_occupation <- as.character(names(which.max(table(sleep_data$Occupation))))
-mode_bmi <- as.character(names(which.max(table(sleep_data$BMI))))
-
-sleep_data <- sleep_data %>%
-mutate(
-  Gender = if_else(is.na(Gender), mode_gender, Gender),
-  Occupation = if_else(is.na(Occupation), mode_occupation, Occupation),
-  BMI = if_else(is.na(BMI), mode_bmi, BMI)
-)
-
+#Q-Q Plot (Obeserved vs Predicted Plot)
+```{r, message=FALSE}
+Sleep_health_and_lifestyle_dataset_df %>%
+  ggplot() +
+  geom_qq(aes(sample = resid)) +
+  geom_qq_line(aes(sample = resid))+
+  labs(title = "Q-Q plot of residuals", x= "Predicted Duration", y= "Observed Duration")
 ```
 
-# Sufficient Sleep
-
-```{r, warning = FALSE, message= FALSE}
-sleep_data$sufficient_sleep <- ifelse(sleep_data$Duration >= 7, "Sufficient", "Insufficient")
-
+#Box Plot
+```{r, fig.width=15}
+Sleep_health_and_lifestyle_dataset_df %>%
+  pivot_longer(
+    cols = Gender:Occupation | Physical | BMI | DSteps,
+    names_to = "column",
+    values_to = "value",
+    values_transform = list(value = 'factor')
+) %>%
+ggplot() +
+  geom_boxplot(aes(x = reorder(value, Duration, FUN = median), y = Duration)) +
+  facet_wrap(~column, scales = "free_x") +
+  labs(x = "x variable", y = "Duration", title = "Box Plot of x variables") +
+  theme(axis.text.x = element_text(angle = 45))
 ```
-
-# Saparate Train, Test Set
-
-```{r, warning = FALSE, message= FALSE}
-set.seed(123)
-train_indices <- createDataPartition(sleep_data$sufficient_sleep, p = 0.7, list = FALSE)
-trainingSet <- sleep_data[train_indices, ]
-testSet <- sleep_data[-train_indices, ]
-
-trainingSet$sufficient_sleep <- as.factor(trainingSet$sufficient_sleep)
-testSet$sufficient_sleep <- as.factor(testSet$sufficient_sleep)
-
-training_Outcomes <- trainingSet$sufficient_sleep
-test_Outcomes <- testSet$sufficient_sleep
-```
-
-# Train
-```{r, warning = FALSE, message= FALSE}
-model <- glm(sufficient_sleep ~ Age + Gender + Occupation + Physical + DSteps + BMI, data = trainingSet, family = binomial)
-```
-
-# Predict
-```{r, warning = FALSE, message= FALSE}
-predictions <- predict(model, newdata = testSet, type = "response")
-```
-
-# Test
-```{r, warning = FALSE, }
-
-threshold <- 0.5  
-predicted_classes <- as.factor(ifelse(predictions >= threshold, "Sufficient", "Insufficient"))
-actual_classes <- test_Outcomes
-accuracy <- sum(predicted_classes == actual_classes) / length(actual_classes)
-print(paste("Accuracy:", accuracy))
-
-model_1_preds <- testSet %>%
-  add_predictions(model, type = "response") %>%
-  mutate(
-    outcome = as.factor(if_else(condition = pred > threshold, 
-                      "Sufficient", "Insufficient"))
-  )
-
-```
-
 
 
 
