@@ -94,6 +94,108 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
           Disorder = 'Sleep Disorder' )
 ```
 
+#Hypothesis Testing
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "High"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "High"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
+```
+
+```{r, message=FALSE}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
+  ggplot() +
+  geom_histogram( 
+    mapping = aes(x = Duration, fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
+```
+
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
+  ggplot() +
+  geom_density( 
+    mapping = aes(x = Duration, fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
+```
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+summarize(
+mean = mean(Duration),
+median = median(Duration), 
+standard_deviation = sd(Duration), 
+minimum = min(Duration),
+maximum = max(Duration)
+)
+```
+
+
+
+
+```{r}
+Model <- lm(Duration ~ BMI, data = Sleep_health_and_lifestyle_dataset_renamed)
+Simulation_results <-
+  Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(Duration ~ BMI) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("Normal", "High"))
+```
+
+
+```{r}
+Shl_obs_stat <-
+  Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(formula = Duration ~ BMI) %>%
+  calculate(stat = "diff in means", order = c("Normal","High"))
+```
+
+```{r}
+Shl_null <- Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(Duration ~ BMI) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute")
+```
+
+```{r}
+Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
+
+```
+
+```{r}
+p_value <- Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
+```
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
+  ggplot() +
+  geom_density(mapping = aes(x = Duration, fill = BMI), position = "identity", alpha = 0.5) +
+  geom_text(aes(x = Inf, y = Inf, label = paste("p-value =", round(p_value, 3))),
+            hjust = 1, vjust = 1, color = "red") +
+  labs(title = "Duration vs. BMI Density Plot",
+       x = "Duration",
+       y = "Density") +
+  theme_minimal()
+```
+
+```{r}
+Simulation_results %>%
+ visualize() +
+ shade_p_value(obs_stat = Shl_obs_stat, direction = "right")
+```
+
+
 #Predictive Analysis
 
 ###Load the dataset
@@ -269,132 +371,6 @@ model_1_preds <- testSet %>%
                       "Sufficient", "Insufficient"))
   )
 
-```
-
-
-#Hypothesis
-
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
-  rename( Duration = 'Sleep Duration',
-          Stress = 'Stress Level',
-          Physical = 'Physical Activity Level' ,
-          Quality = 'Quality of Sleep' ,
-          BMI= 'BMI Category' ,
-          BPressure = 'Blood Pressure' ,
-          HRate = 'Heart Rate' ,
-          DSteps = 'Daily Steps' ,
-          Disorder = 'Sleep Disorder' )
-```
-
-
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "High"
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "High"
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
-```
-
-
-
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "High") %>%
-  ggplot() +
-  geom_histogram( 
-    mapping = aes(x = Duration, fill = BMI), 
-    position = "identity",
-alpha = 0.5
-  )
-```
-
-
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "High") %>%
-  ggplot() +
-  geom_histogram( 
-    mapping = aes(x = Duration, y= ..density.., fill = BMI), 
-    position = "identity",
-alpha = 0.5
-  )
-```
-
-
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "High") %>%
-  ggplot() +
-  geom_density( 
-    mapping = aes(x = Duration, fill = BMI), 
-    position = "identity",
-alpha = 0.5
-  )
-```
-
-
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-summarize(
-mean = mean(Duration),
-median = median(Duration), 
-standard_deviation = sd(Duration), 
-minimum = min(Duration),
-maximum = max(Duration)
-)
-```
-
-
-
-
-```{r}
-Model <- lm(Duration ~ BMI, data = Sleep_health_and_lifestyle_dataset_renamed)
-Simulation_results <-
-  Sleep_health_and_lifestyle_dataset_renamed %>%
-  specify(Duration ~ BMI) %>%
-  hypothesize(null = "independence") %>%
-  generate(reps = 1000, type = "permute") %>% 
-  calculate(stat = "diff in means", order = c("Normal", "High"))
-```
-
-
-```{r}
-Shl_obs_stat <-
-  Sleep_health_and_lifestyle_dataset_renamed %>%
-  specify(formula = Duration ~ BMI) %>%
-  calculate(stat = "diff in means", order = c("Normal","High"))
-```
-
-```{r}
-Shl_null <- Sleep_health_and_lifestyle_dataset_renamed %>%
-  specify(Duration ~ BMI) %>%
-  hypothesize(null = "independence") %>%
-  generate(reps = 1000, type = "permute")
-```
-
-
-```{r}
-Shl_null %>%
-  get_p_value(obs_stat = Shl_obs_stat, direction = "right")
-```
-
-
-
-```{r}
-Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
-p_value <- Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
-```
-
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "High") %>%
-  ggplot() +
-  geom_density(mapping = aes(x = Duration, fill = BMI), position = "identity", alpha = 0.5) +
-  geom_text(aes(x = Inf, y = Inf, label = paste("p-value =", round(p_value, 3))),
-            hjust = 1, vjust = 1, color = "red") +
-  labs(title = "Duration vs. BMI Density Plot",
-       x = "Duration",
-       y = "Density") +
-  theme_minimal()
 ```
 
 # Data Visualization

@@ -172,244 +172,7 @@ Choi, \and Seokyeong Park, Semin Seo, Boyeon Kim}
 \end{Highlighting}
 \end{Shaded}
 
-\#Predictive Analysis
-
-\#\#\#Load the dataset
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{Sleep\_health\_and\_lifestyle\_dataset }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\AttributeTok{file =} \StringTok{"Sleep\_health\_and\_lifestyle\_dataset.csv"}\NormalTok{,}
-  \AttributeTok{col\_types =} \FunctionTok{cols}\NormalTok{(}
-    \StringTok{\textquotesingle{}Person ID\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_character}\NormalTok{(),}
-    \StringTok{\textquotesingle{}Age\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
-    \StringTok{\textquotesingle{}Sleep Duration\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
-    \StringTok{\textquotesingle{}Stress Level\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
-    \StringTok{\textquotesingle{}Physical Activity Level\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
-    \StringTok{\textquotesingle{}Quality of Sleep\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
-    \StringTok{\textquotesingle{}BMI Category\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_character}\NormalTok{(),}
-    \StringTok{\textquotesingle{}Blood Pressure\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_character}\NormalTok{(),}
-    \StringTok{\textquotesingle{}Heart Rate\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
-    \StringTok{\textquotesingle{}Daily Steps\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
-    \StringTok{\textquotesingle{}Sleep Disorder\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_character}\NormalTok{()}
-\NormalTok{  ))}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{rename}{%
-\section{Rename}\label{rename}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{Sleep\_health\_and\_lifestyle\_dataset\_renamed }\OtherTok{\textless{}{-}}\NormalTok{ Sleep\_health\_and\_lifestyle\_dataset }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{rename}\NormalTok{(}\AttributeTok{ID =} \StringTok{\textquotesingle{}Person ID\textquotesingle{}}\NormalTok{,}
-         \AttributeTok{Duration =} \StringTok{\textquotesingle{}Sleep Duration\textquotesingle{}}\NormalTok{,}
-         \AttributeTok{Stress =} \StringTok{\textquotesingle{}Stress Level\textquotesingle{}}\NormalTok{,}
-         \AttributeTok{Physical =} \StringTok{\textquotesingle{}Physical Activity Level\textquotesingle{}}\NormalTok{,}
-         \AttributeTok{Quality =} \StringTok{\textquotesingle{}Quality of Sleep\textquotesingle{}}\NormalTok{,}
-         \AttributeTok{BMI =} \StringTok{\textquotesingle{}BMI Category\textquotesingle{}}\NormalTok{,}
-         \AttributeTok{BPressure =} \StringTok{\textquotesingle{}Blood Pressure\textquotesingle{}}\NormalTok{,}
-         \AttributeTok{HRate =} \StringTok{\textquotesingle{}Heart Rate\textquotesingle{}}\NormalTok{,}
-         \AttributeTok{DSteps =} \StringTok{\textquotesingle{}Daily Steps\textquotesingle{}}\NormalTok{,}
-         \AttributeTok{Disorder =} \StringTok{\textquotesingle{}Sleep Disorder\textquotesingle{}}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{parse-sleep-data}{%
-\section{Parse Sleep Data}\label{parse-sleep-data}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{sleep\_data }\OtherTok{\textless{}{-}}\NormalTok{ Sleep\_health\_and\_lifestyle\_dataset\_renamed }\SpecialCharTok{\%\textgreater{}\%}
-    \FunctionTok{mutate}\NormalTok{(}\AttributeTok{sufficient\_sleep =} \FunctionTok{as.logical}\NormalTok{(Duration }\SpecialCharTok{\textgreater{}=} \FloatTok{7.0}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{sleep-data-disorders}{%
-\section{Sleep Data Disorders}\label{sleep-data-disorders}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{sleep\_data }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \FunctionTok{c}\NormalTok{(Disorder), }\AttributeTok{names\_to =} \StringTok{"variable"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"value"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_by}\NormalTok{(variable, value, sufficient\_sleep) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{count =} \FunctionTok{n}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{geom\_bar}\NormalTok{(}
-    \AttributeTok{mapping =} \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ value, }\AttributeTok{y =}\NormalTok{ count, }\AttributeTok{fill =}\NormalTok{ sufficient\_sleep),}
-    \AttributeTok{position =} \StringTok{"dodge"}\NormalTok{,   }
-    \AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{,}
-    \AttributeTok{stat =} \StringTok{"identity"}
-\NormalTok{  ) }\SpecialCharTok{+}
-  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ variable, }\AttributeTok{scales =} \StringTok{"free"}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Distribution of Sufficient Sleep across Disorders"}\NormalTok{,}
-       \AttributeTok{x =} \StringTok{"Disorder Type"}\NormalTok{, }
-       \AttributeTok{y =} \StringTok{"Count"}\NormalTok{, }
-       \AttributeTok{fill =} \StringTok{"Sufficient Sleep"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-7-1} \end{center}
-
-\hypertarget{sleep-data-gender}{%
-\section{Sleep Data Gender}\label{sleep-data-gender}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{sleep\_data }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \FunctionTok{c}\NormalTok{(Gender), }\AttributeTok{names\_to =} \StringTok{"variable"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"value"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_by}\NormalTok{(variable, value, sufficient\_sleep) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{count =} \FunctionTok{n}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{geom\_bar}\NormalTok{(}
-    \AttributeTok{mapping =} \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ value, }\AttributeTok{y =}\NormalTok{ count, }\AttributeTok{fill =}\NormalTok{ sufficient\_sleep),}
-    \AttributeTok{position =} \StringTok{"dodge"}\NormalTok{,  }
-    \AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{,}
-    \AttributeTok{stat =} \StringTok{"identity"}
-\NormalTok{  ) }\SpecialCharTok{+}
-  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ variable, }\AttributeTok{scales =} \StringTok{"free"}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Distribution of Sufficient Sleep by Gender"}\NormalTok{,}
-       \AttributeTok{x =} \StringTok{"Value"}\NormalTok{, }
-       \AttributeTok{y =} \StringTok{"Count"}\NormalTok{, }
-       \AttributeTok{fill =} \StringTok{"Sufficient Sleep"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-8-1} \end{center}
-
-\hypertarget{sleep-data-bmi}{%
-\section{Sleep Data BMI}\label{sleep-data-bmi}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{sleep\_data }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \FunctionTok{c}\NormalTok{(BMI), }\AttributeTok{names\_to =} \StringTok{"variable"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"value"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{value =} \FunctionTok{ifelse}\NormalTok{(value }\SpecialCharTok{==} \StringTok{"Normal"}\NormalTok{, }\StringTok{"Normal Weight"}\NormalTok{, value)) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_by}\NormalTok{(variable, value, sufficient\_sleep) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{count =} \FunctionTok{n}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{geom\_bar}\NormalTok{(}
-    \AttributeTok{mapping =} \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ value, }\AttributeTok{y =}\NormalTok{ count, }\AttributeTok{fill =}\NormalTok{ sufficient\_sleep),}
-    \AttributeTok{position =} \StringTok{"dodge"}\NormalTok{,   }
-    \AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{,}
-    \AttributeTok{stat =} \StringTok{"identity"}
-\NormalTok{  ) }\SpecialCharTok{+}
-  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ variable, }\AttributeTok{scales =} \StringTok{"free"}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Distribution of Sufficient Sleep by BMI Category"}\NormalTok{,}
-       \AttributeTok{x =} \StringTok{"Value"}\NormalTok{, }
-       \AttributeTok{y =} \StringTok{"Count"}\NormalTok{, }
-       \AttributeTok{fill =} \StringTok{"Sufficient Sleep"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-9-1} \end{center}
-
-\hypertarget{mode}{%
-\section{Mode}\label{mode}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{mode\_gender }\OtherTok{\textless{}{-}} \FunctionTok{as.character}\NormalTok{(}\FunctionTok{names}\NormalTok{(}\FunctionTok{which.max}\NormalTok{(}\FunctionTok{table}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{Gender))))}
-\NormalTok{mode\_occupation }\OtherTok{\textless{}{-}} \FunctionTok{as.character}\NormalTok{(}\FunctionTok{names}\NormalTok{(}\FunctionTok{which.max}\NormalTok{(}\FunctionTok{table}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{Occupation))))}
-\NormalTok{mode\_bmi }\OtherTok{\textless{}{-}} \FunctionTok{as.character}\NormalTok{(}\FunctionTok{names}\NormalTok{(}\FunctionTok{which.max}\NormalTok{(}\FunctionTok{table}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{BMI))))}
-
-\NormalTok{sleep\_data }\OtherTok{\textless{}{-}}\NormalTok{ sleep\_data }\SpecialCharTok{\%\textgreater{}\%}
-\FunctionTok{mutate}\NormalTok{(}
-  \AttributeTok{Gender =} \FunctionTok{if\_else}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(Gender), mode\_gender, Gender),}
-  \AttributeTok{Occupation =} \FunctionTok{if\_else}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(Occupation), mode\_occupation, Occupation),}
-  \AttributeTok{BMI =} \FunctionTok{if\_else}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(BMI), mode\_bmi, BMI)}
-\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{sufficient-sleep}{%
-\section{Sufficient Sleep}\label{sufficient-sleep}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{sleep\_data}\SpecialCharTok{$}\NormalTok{sufficient\_sleep }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{Duration }\SpecialCharTok{\textgreater{}=} \DecValTok{7}\NormalTok{, }\StringTok{"Sufficient"}\NormalTok{, }\StringTok{"Insufficient"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{saparate-train-test-set}{%
-\section{Saparate Train, Test Set}\label{saparate-train-test-set}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
-\NormalTok{train\_indices }\OtherTok{\textless{}{-}} \FunctionTok{createDataPartition}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{sufficient\_sleep, }\AttributeTok{p =} \FloatTok{0.7}\NormalTok{, }\AttributeTok{list =} \ConstantTok{FALSE}\NormalTok{)}
-\NormalTok{trainingSet }\OtherTok{\textless{}{-}}\NormalTok{ sleep\_data[train\_indices, ]}
-\NormalTok{testSet }\OtherTok{\textless{}{-}}\NormalTok{ sleep\_data[}\SpecialCharTok{{-}}\NormalTok{train\_indices, ]}
-
-\NormalTok{trainingSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(trainingSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep)}
-\NormalTok{testSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(testSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep)}
-
-\NormalTok{training\_Outcomes }\OtherTok{\textless{}{-}}\NormalTok{ trainingSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep}
-\NormalTok{test\_Outcomes }\OtherTok{\textless{}{-}}\NormalTok{ testSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{train}{%
-\section{Train}\label{train}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{model }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(sufficient\_sleep }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Age }\SpecialCharTok{+}\NormalTok{ Gender }\SpecialCharTok{+}\NormalTok{ Occupation }\SpecialCharTok{+}\NormalTok{ Physical }\SpecialCharTok{+}\NormalTok{ DSteps }\SpecialCharTok{+}\NormalTok{ BMI, }\AttributeTok{data =}\NormalTok{ trainingSet, }\AttributeTok{family =}\NormalTok{ binomial)}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{predict}{%
-\section{Predict}\label{predict}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{predictions }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(model, }\AttributeTok{newdata =}\NormalTok{ testSet, }\AttributeTok{type =} \StringTok{"response"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\hypertarget{test}{%
-\section{Test}\label{test}}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{threshold }\OtherTok{\textless{}{-}} \FloatTok{0.5}  
-\NormalTok{predicted\_classes }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(}\FunctionTok{ifelse}\NormalTok{(predictions }\SpecialCharTok{\textgreater{}=}\NormalTok{ threshold, }\StringTok{"Sufficient"}\NormalTok{, }\StringTok{"Insufficient"}\NormalTok{))}
-\NormalTok{actual\_classes }\OtherTok{\textless{}{-}}\NormalTok{ test\_Outcomes}
-\NormalTok{accuracy }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(predicted\_classes }\SpecialCharTok{==}\NormalTok{ actual\_classes) }\SpecialCharTok{/} \FunctionTok{length}\NormalTok{(actual\_classes)}
-\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"Accuracy:"}\NormalTok{, accuracy))}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## [1] "Accuracy: 0.981981981981982"
-\end{verbatim}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{model\_1\_preds }\OtherTok{\textless{}{-}}\NormalTok{ testSet }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{add\_predictions}\NormalTok{(model, }\AttributeTok{type =} \StringTok{"response"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{mutate}\NormalTok{(}
-    \AttributeTok{outcome =} \FunctionTok{as.factor}\NormalTok{(}\FunctionTok{if\_else}\NormalTok{(}\AttributeTok{condition =}\NormalTok{ pred }\SpecialCharTok{\textgreater{}}\NormalTok{ threshold, }
-                      \StringTok{"Sufficient"}\NormalTok{, }\StringTok{"Insufficient"}\NormalTok{))}
-\NormalTok{  )}
-\end{Highlighting}
-\end{Shaded}
-
-\#Hypothesis
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{Sleep\_health\_and\_lifestyle\_dataset\_renamed }\OtherTok{\textless{}{-}}\NormalTok{ Sleep\_health\_and\_lifestyle\_dataset }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{rename}\NormalTok{( }\AttributeTok{Duration =} \StringTok{\textquotesingle{}Sleep Duration\textquotesingle{}}\NormalTok{,}
-          \AttributeTok{Stress =} \StringTok{\textquotesingle{}Stress Level\textquotesingle{}}\NormalTok{,}
-          \AttributeTok{Physical =} \StringTok{\textquotesingle{}Physical Activity Level\textquotesingle{}}\NormalTok{ ,}
-          \AttributeTok{Quality =} \StringTok{\textquotesingle{}Quality of Sleep\textquotesingle{}}\NormalTok{ ,}
-          \AttributeTok{BMI=} \StringTok{\textquotesingle{}BMI Category\textquotesingle{}}\NormalTok{ ,}
-          \AttributeTok{BPressure =} \StringTok{\textquotesingle{}Blood Pressure\textquotesingle{}}\NormalTok{ ,}
-          \AttributeTok{HRate =} \StringTok{\textquotesingle{}Heart Rate\textquotesingle{}}\NormalTok{ ,}
-          \AttributeTok{DSteps =} \StringTok{\textquotesingle{}Daily Steps\textquotesingle{}}\NormalTok{ ,}
-          \AttributeTok{Disorder =} \StringTok{\textquotesingle{}Sleep Disorder\textquotesingle{}}\NormalTok{ )}
-\end{Highlighting}
-\end{Shaded}
+\#Hypothesis Testing
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -432,38 +195,7 @@ Choi, \and Seokyeong Park, Semin Seo, Boyeon Kim}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{verbatim}
-## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-\end{verbatim}
-
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-18-1} \end{center}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{Sleep\_health\_and\_lifestyle\_dataset\_renamed }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(BMI }\SpecialCharTok{==} \StringTok{"Normal"} \SpecialCharTok{|}\NormalTok{ BMI }\SpecialCharTok{==} \StringTok{"High"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
-  \FunctionTok{geom\_histogram}\NormalTok{( }
-    \AttributeTok{mapping =} \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ Duration, }\AttributeTok{y=}\NormalTok{ ..density.., }\AttributeTok{fill =}\NormalTok{ BMI), }
-    \AttributeTok{position =} \StringTok{"identity"}\NormalTok{,}
-\AttributeTok{alpha =} \FloatTok{0.5}
-\NormalTok{  )}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{verbatim}
-## Warning: The dot-dot notation (`..density..`) was deprecated in ggplot2 3.4.0.
-## i Please use `after_stat(density)` instead.
-## This warning is displayed once every 8 hours.
-## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-## generated.
-\end{verbatim}
-
-\begin{verbatim}
-## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-\end{verbatim}
-
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-19-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-5-1} \end{center}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -478,7 +210,7 @@ Choi, \and Seokyeong Park, Semin Seo, Boyeon Kim}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-20-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-6-1} \end{center}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -535,23 +267,6 @@ mean & median & standard\_deviation & minimum & maximum \\
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{Shl\_null }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{get\_p\_value}\NormalTok{(}\AttributeTok{obs\_stat =}\NormalTok{ Shl\_obs\_stat, }\AttributeTok{direction =} \StringTok{"right"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{longtable}[]{@{}r@{}}
-\toprule\noalign{}
-p\_value \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-1 \\
-\end{longtable}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \NormalTok{Shl\_null }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{get\_p\_value}\NormalTok{(}\AttributeTok{obs\_stat =}\NormalTok{ Shl\_obs\_stat, }\AttributeTok{direction =} \StringTok{"right"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
@@ -587,11 +302,236 @@ p\_value \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-27-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-13-1} \end{center}
 
-\hypertarget{part-2-data-visualization}{%
-\subsubsection{Part 2 Data
-Visualization}\label{part-2-data-visualization}}
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Simulation\_results }\SpecialCharTok{\%\textgreater{}\%}
+ \FunctionTok{visualize}\NormalTok{() }\SpecialCharTok{+}
+ \FunctionTok{shade\_p\_value}\NormalTok{(}\AttributeTok{obs\_stat =}\NormalTok{ Shl\_obs\_stat, }\AttributeTok{direction =} \StringTok{"right"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in min(diff(unique_loc)): min에 전달되는 인자들 중 누락이 있어 Inf를
+## 반환합니다
+\end{verbatim}
+
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-14-1} \end{center}
+
+\#Predictive Analysis
+
+\#\#\#Load the dataset
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Sleep\_health\_and\_lifestyle\_dataset }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(}\AttributeTok{file =} \StringTok{"Sleep\_health\_and\_lifestyle\_dataset.csv"}\NormalTok{,}
+  \AttributeTok{col\_types =} \FunctionTok{cols}\NormalTok{(}
+    \StringTok{\textquotesingle{}Person ID\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_character}\NormalTok{(),}
+    \StringTok{\textquotesingle{}Age\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
+    \StringTok{\textquotesingle{}Sleep Duration\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
+    \StringTok{\textquotesingle{}Stress Level\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
+    \StringTok{\textquotesingle{}Physical Activity Level\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
+    \StringTok{\textquotesingle{}Quality of Sleep\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
+    \StringTok{\textquotesingle{}BMI Category\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_character}\NormalTok{(),}
+    \StringTok{\textquotesingle{}Blood Pressure\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_character}\NormalTok{(),}
+    \StringTok{\textquotesingle{}Heart Rate\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
+    \StringTok{\textquotesingle{}Daily Steps\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_double}\NormalTok{(),}
+    \StringTok{\textquotesingle{}Sleep Disorder\textquotesingle{}} \OtherTok{=} \FunctionTok{col\_character}\NormalTok{()}
+\NormalTok{  ))}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#Rename
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{Sleep\_health\_and\_lifestyle\_dataset\_renamed }\OtherTok{\textless{}{-}}\NormalTok{ Sleep\_health\_and\_lifestyle\_dataset }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{rename}\NormalTok{(}\AttributeTok{ID =} \StringTok{\textquotesingle{}Person ID\textquotesingle{}}\NormalTok{,}
+         \AttributeTok{Duration =} \StringTok{\textquotesingle{}Sleep Duration\textquotesingle{}}\NormalTok{,}
+         \AttributeTok{Stress =} \StringTok{\textquotesingle{}Stress Level\textquotesingle{}}\NormalTok{,}
+         \AttributeTok{Physical =} \StringTok{\textquotesingle{}Physical Activity Level\textquotesingle{}}\NormalTok{,}
+         \AttributeTok{Quality =} \StringTok{\textquotesingle{}Quality of Sleep\textquotesingle{}}\NormalTok{,}
+         \AttributeTok{BMI =} \StringTok{\textquotesingle{}BMI Category\textquotesingle{}}\NormalTok{,}
+         \AttributeTok{BPressure =} \StringTok{\textquotesingle{}Blood Pressure\textquotesingle{}}\NormalTok{,}
+         \AttributeTok{HRate =} \StringTok{\textquotesingle{}Heart Rate\textquotesingle{}}\NormalTok{,}
+         \AttributeTok{DSteps =} \StringTok{\textquotesingle{}Daily Steps\textquotesingle{}}\NormalTok{,}
+         \AttributeTok{Disorder =} \StringTok{\textquotesingle{}Sleep Disorder\textquotesingle{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#Parse Sleep Data
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sleep\_data }\OtherTok{\textless{}{-}}\NormalTok{ Sleep\_health\_and\_lifestyle\_dataset\_renamed }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{mutate}\NormalTok{(}\AttributeTok{sufficient\_sleep =} \FunctionTok{as.logical}\NormalTok{(Duration }\SpecialCharTok{\textgreater{}=} \FloatTok{7.0}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#Sleep Data Disorders
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sleep\_data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \FunctionTok{c}\NormalTok{(Disorder), }\AttributeTok{names\_to =} \StringTok{"variable"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"value"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(variable, value, sufficient\_sleep) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{count =} \FunctionTok{n}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_bar}\NormalTok{(}
+    \AttributeTok{mapping =} \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ value, }\AttributeTok{y =}\NormalTok{ count, }\AttributeTok{fill =}\NormalTok{ sufficient\_sleep),}
+    \AttributeTok{position =} \StringTok{"dodge"}\NormalTok{,   }
+    \AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{,}
+    \AttributeTok{stat =} \StringTok{"identity"}
+\NormalTok{  ) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ variable, }\AttributeTok{scales =} \StringTok{"free"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Distribution of Sufficient Sleep across Disorders"}\NormalTok{,}
+       \AttributeTok{x =} \StringTok{"Disorder Type"}\NormalTok{, }
+       \AttributeTok{y =} \StringTok{"Count"}\NormalTok{, }
+       \AttributeTok{fill =} \StringTok{"Sufficient Sleep"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-18-1} \end{center}
+
+\#\#\#Sleep Data Gender
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sleep\_data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \FunctionTok{c}\NormalTok{(Gender), }\AttributeTok{names\_to =} \StringTok{"variable"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"value"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(variable, value, sufficient\_sleep) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{count =} \FunctionTok{n}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_bar}\NormalTok{(}
+    \AttributeTok{mapping =} \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ value, }\AttributeTok{y =}\NormalTok{ count, }\AttributeTok{fill =}\NormalTok{ sufficient\_sleep),}
+    \AttributeTok{position =} \StringTok{"dodge"}\NormalTok{,  }
+    \AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{,}
+    \AttributeTok{stat =} \StringTok{"identity"}
+\NormalTok{  ) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ variable, }\AttributeTok{scales =} \StringTok{"free"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Distribution of Sufficient Sleep by Gender"}\NormalTok{,}
+       \AttributeTok{x =} \StringTok{"Value"}\NormalTok{, }
+       \AttributeTok{y =} \StringTok{"Count"}\NormalTok{, }
+       \AttributeTok{fill =} \StringTok{"Sufficient Sleep"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-19-1} \end{center}
+
+\#\#\#Sleep Data BMI
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sleep\_data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols =} \FunctionTok{c}\NormalTok{(BMI), }\AttributeTok{names\_to =} \StringTok{"variable"}\NormalTok{, }\AttributeTok{values\_to =} \StringTok{"value"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{value =} \FunctionTok{ifelse}\NormalTok{(value }\SpecialCharTok{==} \StringTok{"Normal"}\NormalTok{, }\StringTok{"Normal Weight"}\NormalTok{, value)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(variable, value, sufficient\_sleep) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarise}\NormalTok{(}\AttributeTok{count =} \FunctionTok{n}\NormalTok{()) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_bar}\NormalTok{(}
+    \AttributeTok{mapping =} \FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ value, }\AttributeTok{y =}\NormalTok{ count, }\AttributeTok{fill =}\NormalTok{ sufficient\_sleep),}
+    \AttributeTok{position =} \StringTok{"dodge"}\NormalTok{,   }
+    \AttributeTok{alpha =} \FloatTok{0.6}\NormalTok{,}
+    \AttributeTok{stat =} \StringTok{"identity"}
+\NormalTok{  ) }\SpecialCharTok{+}
+  \FunctionTok{facet\_wrap}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ variable, }\AttributeTok{scales =} \StringTok{"free"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{title =} \StringTok{"Distribution of Sufficient Sleep by BMI Category"}\NormalTok{,}
+       \AttributeTok{x =} \StringTok{"Value"}\NormalTok{, }
+       \AttributeTok{y =} \StringTok{"Count"}\NormalTok{, }
+       \AttributeTok{fill =} \StringTok{"Sufficient Sleep"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-20-1} \end{center}
+
+\#\#\#Mode
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{mode\_gender }\OtherTok{\textless{}{-}} \FunctionTok{as.character}\NormalTok{(}\FunctionTok{names}\NormalTok{(}\FunctionTok{which.max}\NormalTok{(}\FunctionTok{table}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{Gender))))}
+\NormalTok{mode\_occupation }\OtherTok{\textless{}{-}} \FunctionTok{as.character}\NormalTok{(}\FunctionTok{names}\NormalTok{(}\FunctionTok{which.max}\NormalTok{(}\FunctionTok{table}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{Occupation))))}
+\NormalTok{mode\_bmi }\OtherTok{\textless{}{-}} \FunctionTok{as.character}\NormalTok{(}\FunctionTok{names}\NormalTok{(}\FunctionTok{which.max}\NormalTok{(}\FunctionTok{table}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{BMI))))}
+
+\NormalTok{sleep\_data }\OtherTok{\textless{}{-}}\NormalTok{ sleep\_data }\SpecialCharTok{\%\textgreater{}\%}
+\FunctionTok{mutate}\NormalTok{(}
+  \AttributeTok{Gender =} \FunctionTok{if\_else}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(Gender), mode\_gender, Gender),}
+  \AttributeTok{Occupation =} \FunctionTok{if\_else}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(Occupation), mode\_occupation, Occupation),}
+  \AttributeTok{BMI =} \FunctionTok{if\_else}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(BMI), mode\_bmi, BMI)}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#Sufficient Sleep
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sleep\_data}\SpecialCharTok{$}\NormalTok{sufficient\_sleep }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{Duration }\SpecialCharTok{\textgreater{}=} \DecValTok{7}\NormalTok{, }\StringTok{"Sufficient"}\NormalTok{, }\StringTok{"Insufficient"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#Saparate Train, Test Set
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+\NormalTok{train\_indices }\OtherTok{\textless{}{-}} \FunctionTok{createDataPartition}\NormalTok{(sleep\_data}\SpecialCharTok{$}\NormalTok{sufficient\_sleep, }\AttributeTok{p =} \FloatTok{0.7}\NormalTok{, }\AttributeTok{list =} \ConstantTok{FALSE}\NormalTok{)}
+\NormalTok{trainingSet }\OtherTok{\textless{}{-}}\NormalTok{ sleep\_data[train\_indices, ]}
+\NormalTok{testSet }\OtherTok{\textless{}{-}}\NormalTok{ sleep\_data[}\SpecialCharTok{{-}}\NormalTok{train\_indices, ]}
+
+\NormalTok{trainingSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(trainingSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep)}
+\NormalTok{testSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(testSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep)}
+
+\NormalTok{training\_Outcomes }\OtherTok{\textless{}{-}}\NormalTok{ trainingSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep}
+\NormalTok{test\_Outcomes }\OtherTok{\textless{}{-}}\NormalTok{ testSet}\SpecialCharTok{$}\NormalTok{sufficient\_sleep}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#Train
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(sufficient\_sleep }\SpecialCharTok{\textasciitilde{}}\NormalTok{ Age }\SpecialCharTok{+}\NormalTok{ Gender }\SpecialCharTok{+}\NormalTok{ Occupation }\SpecialCharTok{+}\NormalTok{ Physical }\SpecialCharTok{+}\NormalTok{ DSteps }\SpecialCharTok{+}\NormalTok{ BMI, }\AttributeTok{data =}\NormalTok{ trainingSet, }\AttributeTok{family =}\NormalTok{ binomial)}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#Predict
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{predictions }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(model, }\AttributeTok{newdata =}\NormalTok{ testSet, }\AttributeTok{type =} \StringTok{"response"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\#\#\#Test
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{threshold }\OtherTok{\textless{}{-}} \FloatTok{0.5}  
+\NormalTok{predicted\_classes }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(}\FunctionTok{ifelse}\NormalTok{(predictions }\SpecialCharTok{\textgreater{}=}\NormalTok{ threshold, }\StringTok{"Sufficient"}\NormalTok{, }\StringTok{"Insufficient"}\NormalTok{))}
+\NormalTok{actual\_classes }\OtherTok{\textless{}{-}}\NormalTok{ test\_Outcomes}
+\NormalTok{accuracy }\OtherTok{\textless{}{-}} \FunctionTok{sum}\NormalTok{(predicted\_classes }\SpecialCharTok{==}\NormalTok{ actual\_classes) }\SpecialCharTok{/} \FunctionTok{length}\NormalTok{(actual\_classes)}
+\FunctionTok{print}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"Accuracy:"}\NormalTok{, accuracy))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Accuracy: 0.981981981981982"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model\_1\_preds }\OtherTok{\textless{}{-}}\NormalTok{ testSet }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{add\_predictions}\NormalTok{(model, }\AttributeTok{type =} \StringTok{"response"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}
+    \AttributeTok{outcome =} \FunctionTok{as.factor}\NormalTok{(}\FunctionTok{if\_else}\NormalTok{(}\AttributeTok{condition =}\NormalTok{ pred }\SpecialCharTok{\textgreater{}}\NormalTok{ threshold, }
+                      \StringTok{"Sufficient"}\NormalTok{, }\StringTok{"Insufficient"}\NormalTok{))}
+\NormalTok{  )}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{data-visualization}{%
+\section{Data Visualization}\label{data-visualization}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -620,7 +560,7 @@ Visualization}\label{part-2-data-visualization}}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-29-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-28-1} \end{center}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -651,10 +591,10 @@ Visualization}\label{part-2-data-visualization}}
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-32-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-31-1} \end{center}
 
 \hypertarget{data-wrangling}{%
-\subsubsection{Data Wrangling}\label{data-wrangling}}
+\section{Data Wrangling}\label{data-wrangling}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -791,10 +731,9 @@ Quality
 \end{longtable}
 
 \hypertarget{eda}{%
-\subsubsection{EDA}\label{eda}}
+\section{EDA}\label{eda}}
 
-\hypertarget{explore-dataset}{%
-\section{Explore dataset}\label{explore-dataset}}
+\#\#\#Explore dataset
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -951,8 +890,7 @@ standard\_deviation \\
 \hypertarget{visualizing-data}{%
 \section{Visualizing data}\label{visualizing-data}}
 
-\hypertarget{histogram}{%
-\subsection{Histogram}\label{histogram}}
+\#\#\#Histogram
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -963,10 +901,9 @@ standard\_deviation \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-40-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-39-1} \end{center}
 
-\hypertarget{box-plot}{%
-\subsection{Box plot}\label{box-plot}}
+\#\#\#Box plot
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -977,10 +914,10 @@ standard\_deviation \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-41-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-40-1} \end{center}
 
 \hypertarget{violin-plot}{%
-\subsection{Violin plot}\label{violin-plot}}
+\subsubsection{Violin plot}\label{violin-plot}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -991,10 +928,9 @@ standard\_deviation \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-42-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-41-1} \end{center}
 
-\hypertarget{bar-graph}{%
-\subsection{Bar Graph}\label{bar-graph}}
+\#\#\#Bar Graph
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1005,10 +941,9 @@ standard\_deviation \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-43-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-42-1} \end{center}
 
-\hypertarget{box-plot-1}{%
-\subsection{Box plot}\label{box-plot-1}}
+\#\#\#Box plot
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1019,10 +954,9 @@ standard\_deviation \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-44-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-43-1} \end{center}
 
-\hypertarget{violin-plot-1}{%
-\subsection{Violin plot}\label{violin-plot-1}}
+\#\#\#Violin plot
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1033,9 +967,9 @@ standard\_deviation \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-45-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-44-1} \end{center}
 
-\#Scatter plot\_Duration and Heart Rate
+\#\#\#Scatter plot\_Duration and Heart Rate
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1050,10 +984,10 @@ standard\_deviation \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-46-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-45-1} \end{center}
 
-\hypertarget{part-5-_-modeling}{%
-\subsubsection{PART 5 \_ Modeling}\label{part-5-_-modeling}}
+\hypertarget{modeling}{%
+\section{Modeling}\label{modeling}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1065,7 +999,7 @@ standard\_deviation \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-47-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-46-1} \end{center}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1108,7 +1042,7 @@ standard\_deviation \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-49-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-48-1} \end{center}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1196,7 +1130,7 @@ r.squared \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-54-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-53-1} \end{center}
 
 \#Advanced Modeling
 
@@ -1264,7 +1198,8 @@ Physical & 0.0254908 & 0.0020941 & 12.1729446 & 0.0000000 \\
 \end{Highlighting}
 \end{Shaded}
 
-\#Histogram of residual in Sleep\_health\_and\_lifestyle\_dataset\_df
+\#\#\#Histogram of residual in
+Sleep\_health\_and\_lifestyle\_dataset\_df
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1276,9 +1211,9 @@ Physical & 0.0254908 & 0.0020941 & 12.1729446 & 0.0000000 \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-58-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-57-1} \end{center}
 
-\#Observed vs.~Predicted Plot
+\#\#\#Observed vs.~Predicted Plot
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1290,9 +1225,9 @@ Physical & 0.0254908 & 0.0020941 & 12.1729446 & 0.0000000 \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-59-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-58-1} \end{center}
 
-\#Residual vs Predicted Plot
+\#\#\#Residual vs Predicted Plot
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1306,9 +1241,9 @@ Physical & 0.0254908 & 0.0020941 & 12.1729446 & 0.0000000 \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-60-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-59-1} \end{center}
 
-\#Q-Q Plot (Obeserved vs Predicted Plot)
+\#\#\#Q-Q Plot (Obeserved vs Predicted Plot)
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1320,9 +1255,9 @@ Physical & 0.0254908 & 0.0020941 & 12.1729446 & 0.0000000 \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-61-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-60-1} \end{center}
 
-\#Box Plot
+\#\#\#Box Plot
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1341,6 +1276,6 @@ Physical & 0.0254908 & 0.0020941 & 12.1729446 & 0.0000000 \\
 \end{Highlighting}
 \end{Shaded}
 
-\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-62-1} \end{center}
+\begin{center}\includegraphics[width=0.7\linewidth]{SleepHelath_files/figure-latex/unnamed-chunk-61-1} \end{center}
 
 \end{document}
