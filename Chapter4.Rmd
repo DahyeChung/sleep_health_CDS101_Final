@@ -71,15 +71,13 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
           Disorder = 'Sleep Disorder' )
 ```
 ```{r}
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "High"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "High"
 Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
 ```
 
 # Explore dataset
-```{r}
-str(Sleep_health_and_lifestyle_dataset)
-```
+
 ```{r}
 head(Sleep_health_and_lifestyle_dataset)
 ```
@@ -104,8 +102,8 @@ Sleep_health_and_lifestyle_dataset_renamed %>%
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed %>%
   ggplot() +
-    geom_histogram(mapping = aes(x = HRate)) +
-    labs(title = "Count of Heart Rate", x = "Heart rate")
+    geom_histogram(mapping = aes(x = HRate), color = "pink", fill = "lightgreen") +
+    labs(title = "Count of Heart Rate", x = "Heart rate") 
 ```
 
 ## Box plot
@@ -123,18 +121,12 @@ Sleep_health_and_lifestyle_dataset_renamed %>%
     geom_violin(mapping = aes(x = HRate, y ="")) +
     labs(title = "Violin of Individual Heart rate", x = "Heart rate", y = "y")
 ```
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  ggplot() +
-  geom_bin2d(mapping = aes(x = HRate, y = Duration)) +
-  labs(title = "HRate and Duration ",x = "Heart Rate",y = "Duration") + scale_fill_viridis_c(trans = "log")
-```
 
 ## Bar Graph
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed %>%
   ggplot() +
-    geom_bar(mapping = aes(x = BMI)) +
+    geom_bar(mapping = aes(x = BMI), color = "black", fill = "yellow") +
     labs(title = "BMI Count", x = "BMI")
 ```
 
