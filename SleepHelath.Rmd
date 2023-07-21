@@ -83,7 +83,8 @@ Sleep_health_and_lifestyle_dataset <- read_csv("Sleep_health_and_lifestyle_datas
 
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset %>%
-  rename( Duration = 'Sleep Duration',
+  rename( ID = 'Person ID',
+          Duration = 'Sleep Duration',
           Stress = 'Stress Level',
           Physical = 'Physical Activity Level' ,
           Quality = 'Quality of Sleep' ,
@@ -94,94 +95,293 @@ Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset
           Disorder = 'Sleep Disorder' )
 ```
 
-#Hypothesis Testing
+
+# EDA
+
+###Explore dataset
 
 ```{r}
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "High"
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "High"
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
+head(Sleep_health_and_lifestyle_dataset)
+```
+```{r}
+tail(Sleep_health_and_lifestyle_dataset)
 ```
 
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  summarize(
+    standard_deviation = sd(HRate)
+    
+  )
+```
+# Visualizing data
+###Histogram
 ```{r, message=FALSE}
 Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "High") %>%
   ggplot() +
-  geom_histogram( 
-    mapping = aes(x = Duration, fill = BMI), 
-    position = "identity",
-alpha = 0.5
-  )
+    geom_histogram(mapping = aes(x = HRate), color = "pink", fill = "lightgreen") +
+    labs(title = "Count of Heart Rate", x = "Heart rate") 
 ```
 
-
+###Box plot
 
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed %>%
-  filter(BMI == "Normal" | BMI == "High") %>%
   ggplot() +
-  geom_density( 
-    mapping = aes(x = Duration, fill = BMI), 
-    position = "identity",
-alpha = 0.5
-  )
+    geom_boxplot(mapping = aes(x = HRate)) +
+    labs(title = "Boxplot of Individual Heart Rate", x = "Heart rate")
 ```
-
-
+### Violin plot
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed %>%
-summarize(
-mean = mean(Duration),
-median = median(Duration), 
-standard_deviation = sd(Duration), 
-minimum = min(Duration),
-maximum = max(Duration)
+  ggplot() +
+    geom_violin(mapping = aes(x = HRate, y ="")) +
+    labs(title = "Violin of Individual Heart rate", x = "Heart rate", y = "y")
+```
+
+###Bar Graph
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_bar(mapping = aes(x = BMI), color = "black", fill = "yellow") +
+    labs(title = "BMI Count", x = "BMI")
+```
+
+###Box plot
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_boxplot(mapping = aes(x = BMI, y = Duration)) +
+    labs(title = "Relationship between BMI and Duration", x = "BMI")
+```
+###Violin plot
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+    geom_violin(mapping = aes(x = BMI, y = Duration)) +
+    labs(title = "Relationship between BMI and Duration", x = "bmi", y = "Duration")
+```
+
+###Scatter plot_Duration and Heart Rate
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed    %>% 
+ggplot()    +
+geom_point(mapping = aes(x = BMI, y = Duration))    + 
+labs(
+title = "Scatter plot of Duration and Heart Rate", 
+x = "BMI",
+y = "Duration" 
 )
 ```
 
 
-
-
+# Data Wrangling
 ```{r}
-Model <- lm(Duration ~ BMI, data = Sleep_health_and_lifestyle_dataset_renamed)
-Simulation_results <-
-  Sleep_health_and_lifestyle_dataset_renamed %>%
-  specify(Duration ~ BMI) %>%
-  hypothesize(null = "independence") %>%
-  generate(reps = 1000, type = "permute") %>% 
-  calculate(stat = "diff in means", order = c("Normal", "High"))
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
 ```
 
 
 ```{r}
-Shl_obs_stat <-
-  Sleep_health_and_lifestyle_dataset_renamed %>%
-  specify(formula = Duration ~ BMI) %>%
-  calculate(stat = "diff in means", order = c("Normal","High"))
-```
-
-```{r}
-Shl_null <- Sleep_health_and_lifestyle_dataset_renamed %>%
-  specify(Duration ~ BMI) %>%
-  hypothesize(null = "independence") %>%
-  generate(reps = 1000, type = "permute")
-```
-
-```{r}
-Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
-
-```
-
-```{r}
-p_value <- Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
+head(Sleep_health_and_lifestyle_dataset_renamed) %>%
+  select(ID, HRate, Duration, Gender, Age, Occupation, Physical, BMI, Quality) %>%
+  arrange(Duration)
 ```
 
 
 ```{r}
-Simulation_results %>%
- visualize() +
- shade_p_value(obs_stat = Shl_obs_stat, direction = "right")
+tail(Sleep_health_and_lifestyle_dataset_renamed) %>%
+ select(ID, HRate, Duration, Gender, Age, Occupation, Physical, BMI, Quality) %>%
+  arrange(Duration) %>%
+  filter(Gender == 'Female')
 ```
 
+
+```{r}
+head(Sleep_health_and_lifestyle_dataset_renamed) %>%
+ select(ID, HRate, Duration, Gender, Age, Occupation, Physical, BMI, Quality) %>%
+  arrange(Duration) %>%
+  filter(Gender == 'Male')
+```
+
+
+
+# Data Visualization
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset%>%
+  rename( ID = "Person ID",
+          Duration = 'Sleep Duration',
+          Stress = 'Stress Level',
+          Physical = 'Physical Activity Level' ,
+          Quality = 'Quality of Sleep' ,
+          BMI= 'BMI Category' ,
+          BPressure = 'Blood Pressure' ,
+          HRate = 'Heart Rate' ,
+          DSteps = 'Daily Steps' ,
+          Disorder = 'Sleep Disorder' )
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot()+
+  geom_point( mapping = aes( x = Age , y = Duration, color = Gender))+
+  labs(
+   title = "Sleep Duration vs Age (by gender)",
+   x= "Age", y = " Duration")
+```
+
+```{r}
+model_2 <- lm(Duration ~ Physical,Sleep_health_and_lifestyle_dataset_renamed)
+```
+
+```{r}
+model_2$coefficients
+```
+```{r, warning=FALSE}
+Sleep_health_and_lifestyle_dataset_renamed %>%
+  ggplot() +
+  geom_point(mapping = aes(x = Physical, y = Duration), bin = 10) +
+  geom_abline(slope = model_2$coefficients[2], 
+              intercept = model_2$coefficients[1])+
+   labs(x = "Physical Activity Level", y = "Sleep Duration",
+                    title = "physical activity level vs sleep duration" )
+```
+
+# Modeling 
+
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed%>%
+  ggplot()+
+  geom_point( mapping = aes( x  = Physical , y = Duration)) +
+  labs(title = "Relationships between Physical activies and Duration",
+       x = "Physical Activities" , y = "Duration")
+```
+
+
+```{r}
+
+data <- Sleep_health_and_lifestyle_dataset_renamed
+
+model <- lm(Duration ~ Physical, data = Sleep_health_and_lifestyle_dataset_renamed)
+
+
+```
+
+```{r, message=FALSE}
+residuals <- residuals(model)
+
+qqnorm(residuals)
+qqline(residuals)
+labs( title  = "QQplot" , x = "Theoretical" , y = "Quantaties")
+```
+
+```{r}
+Renamed_other_model <- lm(Duration ~ Physical, data = Sleep_health_and_lifestyle_dataset_renamed)
+
+```
+
+```{r}
+Renamed_other_model$coefficients
+```
+
+```{r}
+Renamed_other_model%>%
+  tidy()
+```
+
+```{r}
+Renamed_other_model%>%
+  glance()%>%
+  select(r.squared)
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_renamed%>%
+  ggplot()+
+  geom_point(mapping = aes( x  = Physical , y = Duration) )+
+  geom_abline(slope = Renamed_other_model$coefficients[2]	,
+              intercept = Renamed_other_model$coefficients[1]  )+
+  labs( title = "Relationships between Physical and Duration",
+        x = " Physical ",
+        y = " Duration" )
+
+```
+
+#Advanced Modeling 
+
+
+```{r}
+continuous_model <- lm(Duration ~ Gender + Age + Occupation + DSteps + BMI + Physical, data = Sleep_health_and_lifestyle_dataset_renamed)
+coefficients <- tidy (continuous_model)
+coefficients
+```
+
+```{r}
+r_squared <- glance(continuous_model)$r.squared
+```
+
+```{r}
+Sleep_health_and_lifestyle_dataset_df <- Sleep_health_and_lifestyle_dataset_renamed %>%
+  add_predictions(continuous_model) %>%
+  add_residuals(continuous_model)
+```
+
+###Histogram of residual in Sleep_health_and_lifestyle_dataset_df
+```{r}
+Sleep_health_and_lifestyle_dataset_df %>%
+  ggplot() +
+  geom_histogram(mapping = aes(x = resid), color = "blue", fill = "pink", bins = 10) +
+  labs(x = "residual", y ="Duration",
+title = "Histogram of residual in Sleep_health_and_lifestyle_dataset_df")
+```
+
+###Observed vs. Predicted Plot
+```{r}
+Sleep_health_and_lifestyle_dataset_df %>%
+  ggplot() +
+  geom_point(mapping = aes(x = pred, y = Duration)) +
+  geom_abline(slope = 1, intercept = 0) +
+  labs(title = "Observed vs. Predicted Plot", x = "Predicted Duration", y = "Observed Duration")
+```
+
+###Residual vs Predicted Plot
+```{r}
+Sleep_health_and_lifestyle_dataset_df %>%
+  ggplot() +
+  geom_point(mapping = aes(x = pred, y = resid)) +
+  geom_hline(yintercept = 0) +
+  labs( title= "Residual vs Predicted Plot",
+        x = "Predicted Duration",
+        y = "Residuals")
+```
+
+###Q-Q Plot (Obeserved vs Predicted Plot)
+```{r, message=FALSE}
+Sleep_health_and_lifestyle_dataset_df %>%
+  ggplot() +
+  geom_qq(aes(sample = resid)) +
+  geom_qq_line(aes(sample = resid))+
+  labs(title = "Q-Q plot of residuals", x= "Predicted Duration", y= "Observed Duration")
+```
+
+###Box Plot
+```{r, fig.width=15}
+Sleep_health_and_lifestyle_dataset_df %>%
+  pivot_longer(
+    cols = Gender:Occupation | Physical | BMI | DSteps,
+    names_to = "column",
+    values_to = "value",
+    values_transform = list(value = 'factor')
+) %>%
+ggplot() +
+  geom_boxplot(aes(x = reorder(value, Duration, FUN = median), y = Duration)) +
+  facet_wrap(~column, scales = "free_x") +
+  labs(x = "x variable", y = "Duration", title = "Box Plot of x variables") +
+  theme(axis.text.x = element_text(angle = 45))
+```
 
 #Predictive Analysis
 
@@ -357,300 +557,96 @@ model_1_preds <- testSet %>%
     outcome = as.factor(if_else(condition = pred > threshold, 
                       "Sufficient", "Insufficient"))
   )
-
 ```
 
-# Data Visualization
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed <- Sleep_health_and_lifestyle_dataset%>%
-  rename( ID = "Person ID",
-          Duration = 'Sleep Duration',
-          Stress = 'Stress Level',
-          Physical = 'Physical Activity Level' ,
-          Quality = 'Quality of Sleep' ,
-          BMI= 'BMI Category' ,
-          BPressure = 'Blood Pressure' ,
-          HRate = 'Heart Rate' ,
-          DSteps = 'Daily Steps' ,
-          Disorder = 'Sleep Disorder' )
-```
+
+#Hypothesis Testing
 
 ```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  ggplot()+
-  geom_point( mapping = aes( x = Age , y = Duration, color = Gender))+
-  labs(
-   title = "Sleep Duration vs Age (by gender)",
-   x= "Age", y = " Duration")
-```
-
-```{r}
-model_2 <- lm(Duration ~ Physical,Sleep_health_and_lifestyle_dataset_renamed)
-```
-
-```{r}
-model_2$coefficients
-```
-```{r, warning=FALSE}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  ggplot() +
-  geom_point(mapping = aes(x = Physical, y = Duration), bin = 10) +
-  geom_abline(slope = model_2$coefficients[2], 
-              intercept = model_2$coefficients[1])+
-   labs(x = "Physical Activity Level", y = "Sleep Duration",
-                    title = "physical activity level vs sleep duration" )
-```
-# Data Wrangling
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "Fat"
-Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "Fat"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Overweight"] <- "High"
+Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Obese"] <- "High"
 Sleep_health_and_lifestyle_dataset_renamed$BMI[Sleep_health_and_lifestyle_dataset_renamed$BMI == "Normal Weight"] <- "Normal"
 ```
 
-
-```{r}
-head(Sleep_health_and_lifestyle_dataset_renamed) %>%
-  select(ID, HRate, Duration, Gender, Age, Occupation, Physical, BMI, Quality) %>%
-  arrange(Duration)
-```
-
-
-```{r}
-tail(Sleep_health_and_lifestyle_dataset_renamed) %>%
- select(ID, HRate, Duration, Gender, Age, Occupation, Physical, BMI, Quality) %>%
-  arrange(Duration) %>%
-  filter(Gender == 'Female')
-```
-
-
-```{r}
-head(Sleep_health_and_lifestyle_dataset_renamed) %>%
- select(ID, HRate, Duration, Gender, Age, Occupation, Physical, BMI, Quality) %>%
-  arrange(Duration) %>%
-  filter(Gender == 'Male')
-```
-
-# EDA
-
-###Explore dataset
-
-```{r}
-head(Sleep_health_and_lifestyle_dataset)
-```
-```{r}
-tail(Sleep_health_and_lifestyle_dataset)
-```
-
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  summarize(
-    standard_deviation = sd(HRate)
-    
-  )
-```
-# Visualizing data
-###Histogram
 ```{r, message=FALSE}
 Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
   ggplot() +
-    geom_histogram(mapping = aes(x = HRate), color = "pink", fill = "lightgreen") +
-    labs(title = "Count of Heart Rate", x = "Heart rate") 
+  geom_histogram( 
+    mapping = aes(x = Duration, fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
 ```
 
-###Box plot
+
 
 ```{r}
 Sleep_health_and_lifestyle_dataset_renamed %>%
+  filter(BMI == "Normal" | BMI == "High") %>%
   ggplot() +
-    geom_boxplot(mapping = aes(x = HRate)) +
-    labs(title = "Boxplot of Individual Heart Rate", x = "Heart rate")
-```
-### Violin plot
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  ggplot() +
-    geom_violin(mapping = aes(x = HRate, y ="")) +
-    labs(title = "Violin of Individual Heart rate", x = "Heart rate", y = "y")
+  geom_density( 
+    mapping = aes(x = Duration, fill = BMI), 
+    position = "identity",
+alpha = 0.5
+  )
 ```
 
-###Bar Graph
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  ggplot() +
-    geom_bar(mapping = aes(x = BMI), color = "black", fill = "yellow") +
-    labs(title = "BMI Count", x = "BMI")
-```
-
-###Box plot
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  ggplot() +
-    geom_boxplot(mapping = aes(x = BMI, y = Duration)) +
-    labs(title = "Relationship between BMI and Duration", x = "BMI")
-```
-###Violin plot
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed %>%
-  ggplot() +
-    geom_violin(mapping = aes(x = BMI, y = Duration)) +
-    labs(title = "Relationship between BMI and Duration", x = "bmi", y = "Duration")
-```
-
-###Scatter plot_Duration and Heart Rate
 
 ```{r}
-Sleep_health_and_lifestyle_dataset_renamed    %>% 
-ggplot()    +
-geom_point(mapping = aes(x = BMI, y = Duration))    + 
-labs(
-title = "Scatter plot of Duration and Heart Rate", 
-x = "BMI",
-y = "Duration" 
+Sleep_health_and_lifestyle_dataset_renamed %>%
+summarize(
+mean = mean(Duration),
+median = median(Duration), 
+standard_deviation = sd(Duration), 
+minimum = min(Duration),
+maximum = max(Duration)
 )
 ```
 
 
-# Modeling 
 
 
 ```{r}
-Sleep_health_and_lifestyle_dataset_renamed%>%
-  ggplot()+
-  geom_point( mapping = aes( x  = Physical , y = Duration)) +
-  labs(title = "Relationships between Physical activies and Duration",
-       x = "Physical Activities" , y = "Duration")
+Model <- lm(Duration ~ BMI, data = Sleep_health_and_lifestyle_dataset_renamed)
+Simulation_results <-
+  Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(Duration ~ BMI) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute") %>% 
+  calculate(stat = "diff in means", order = c("Normal", "High"))
 ```
-
-
-
-
 
 
 ```{r}
-
-data <- Sleep_health_and_lifestyle_dataset_renamed
-
-model <- lm(Duration ~ Physical, data = Sleep_health_and_lifestyle_dataset_renamed)
-
-
-summary(model)
-
-```
-
-```{r, message=FALSE}
-residuals <- residuals(model)
-
-qqnorm(residuals)
-qqline(residuals)
-labs( title  = "QQplot" , x = "Theoretical" , y = "Quantaties")
+Shl_obs_stat <-
+  Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(formula = Duration ~ BMI) %>%
+  calculate(stat = "diff in means", order = c("Normal","High"))
 ```
 
 ```{r}
-Renamed_other_model <- lm(Duration ~ Physical, data = Sleep_health_and_lifestyle_dataset_renamed)
+Shl_null <- Sleep_health_and_lifestyle_dataset_renamed %>%
+  specify(Duration ~ BMI) %>%
+  hypothesize(null = "independence") %>%
+  generate(reps = 1000, type = "permute")
+```
+
+```{r}
+Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
 
 ```
 
 ```{r}
-Renamed_other_model$coefficients
+p_value <- Shl_null %>% get_p_value(obs_stat = Shl_obs_stat, direction = "right")
 ```
-
-```{r}
-Renamed_other_model%>%
-  tidy()
-```
-
-```{r}
-Renamed_other_model%>%
-  glance()%>%
-  select(r.squared)
-```
-
-```{r}
-Sleep_health_and_lifestyle_dataset_renamed%>%
-  ggplot()+
-  geom_point(mapping = aes( x  = Physical , y = Duration) )+
-  geom_abline(slope = Renamed_other_model$coefficients[2]	,
-              intercept = Renamed_other_model$coefficients[1]  )+
-  labs( title = "Relationships between Physical and Duration",
-        x = " Physical ",
-        y = " Duration" )
-
-```
-
-#Advanced Modeling 
 
 
 ```{r}
-continuous_model <- lm(Duration ~ Gender + Age + Occupation + DSteps + BMI + Physical, data = Sleep_health_and_lifestyle_dataset_renamed)
-coefficients <- tidy (continuous_model)
-coefficients
+Simulation_results %>%
+ visualize() +
+ shade_p_value(obs_stat = Shl_obs_stat, direction = "right")
 ```
-
-```{r}
-r_squared <- glance(continuous_model)$r.squared
-```
-
-```{r}
-Sleep_health_and_lifestyle_dataset_df <- Sleep_health_and_lifestyle_dataset_renamed %>%
-  add_predictions(continuous_model) %>%
-  add_residuals(continuous_model)
-```
-
-###Histogram of residual in Sleep_health_and_lifestyle_dataset_df
-```{r}
-Sleep_health_and_lifestyle_dataset_df %>%
-  ggplot() +
-  geom_histogram(mapping = aes(x = resid), color = "blue", fill = "pink", bins = 10) +
-  labs(x = "residual", y ="Duration",
-title = "Histogram of residual in Sleep_health_and_lifestyle_dataset_df")
-```
-
-###Observed vs. Predicted Plot
-```{r}
-Sleep_health_and_lifestyle_dataset_df %>%
-  ggplot() +
-  geom_point(mapping = aes(x = pred, y = Duration)) +
-  geom_abline(slope = 1, intercept = 0) +
-  labs(title = "Observed vs. Predicted Plot", x = "Predicted Duration", y = "Observed Duration")
-```
-
-###Residual vs Predicted Plot
-```{r}
-Sleep_health_and_lifestyle_dataset_df %>%
-  ggplot() +
-  geom_point(mapping = aes(x = pred, y = resid)) +
-  geom_hline(yintercept = 0) +
-  labs( title= "Residual vs Predicted Plot",
-        x = "Predicted Duration",
-        y = "Residuals")
-```
-
-###Q-Q Plot (Obeserved vs Predicted Plot)
-```{r, message=FALSE}
-Sleep_health_and_lifestyle_dataset_df %>%
-  ggplot() +
-  geom_qq(aes(sample = resid)) +
-  geom_qq_line(aes(sample = resid))+
-  labs(title = "Q-Q plot of residuals", x= "Predicted Duration", y= "Observed Duration")
-```
-
-###Box Plot
-```{r, fig.width=15}
-Sleep_health_and_lifestyle_dataset_df %>%
-  pivot_longer(
-    cols = Gender:Occupation | Physical | BMI | DSteps,
-    names_to = "column",
-    values_to = "value",
-    values_transform = list(value = 'factor')
-) %>%
-ggplot() +
-  geom_boxplot(aes(x = reorder(value, Duration, FUN = median), y = Duration)) +
-  facet_wrap(~column, scales = "free_x") +
-  labs(x = "x variable", y = "Duration", title = "Box Plot of x variables") +
-  theme(axis.text.x = element_text(angle = 45))
-```
-
-
 
 
 
